@@ -33,15 +33,15 @@
     <tbody>
         <tr>
             <td style="text-align: center">🤔</td>
-            <td><a href="https://www.notion.so/ryong9rrr/mbti-5fa2a8edb29643c88c11eb58e01c3456">문제 해결 전략</a></td>
+            <td><a href="#">문제 해결 전략</a></td>
         </tr>
         <tr>
             <td style="text-align: center">🛠</td>
-            <td><a href="https://www.notion.so/ryong9rrr/mbti-5fa2a8edb29643c88c11eb58e01c3456">리팩터링</a></td>
+            <td><a href="#">리팩터링</a></td>
         </tr>
         <tr>
             <td style="text-align: center">💡</td>
-            <td><a href="https://www.notion.so/ryong9rrr/4b402a6cb5e74ba0b4e8572c7f69974d">회고</a></td>
+            <td><a href="#">회고</a></td>
         </tr>
     </tbody>
 </table>

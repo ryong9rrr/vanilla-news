@@ -1,48 +1,50 @@
 const $ = (selector) => document.querySelector(selector);
 const NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
 const CONTENT_URL = `https://api.hnpwa.com/v0/item/@id.json`;
-const ajax = new XMLHttpRequest();
 let unit = 10;
 let page = 1;
 
 function getData(url) {
+  const ajax = new XMLHttpRequest();
   ajax.open("GET", url, false);
   ajax.send();
   return JSON.parse(ajax.response);
 }
 
-const newsFeed = getData(NEWS_URL);
+const newsFeedData = getData(NEWS_URL);
 
-const render = (view) => {
-  $("#root").innerHTML = view();
-};
+function render(view, template) {
+  const $select = $("#select");
+  const page = {
+    newsFeed: () => ($select.hidden = false),
+    newsDetail: () => ($select.hidden = true),
+  };
+  page[view]();
+  return ($("#root").innerHTML = template);
+}
 
-const newFeedView = () => {
-  const liList = [];
+function newsFeed() {
+  const newsList = [];
   for (let i = 0; i < unit; i++) {
-    liList.push(
-      `<li><a href="#${newsFeed[i].id}">${newsFeed[i].title}(좋아요:${newsFeed[i].points} / 댓글:${newsFeed[i].comments_count})</a></li>`
-    );
+    newsList.push(`
+        <li>
+          <a href="#${newsFeedData[i].id}">
+            ${newsFeedData[i].title}(좋아요:${newsFeedData[i].points} / 댓글:${newsFeedData[i].comments_count})
+          </a>
+        </li>`);
   }
-  return `<ul>${liList.join("")}</ul>`;
-};
 
-$("#select").addEventListener("change", (e) => {
-  console.log(e.target.id);
-  const selectedUnit = Number(
-    $("#select").options[$("#select").selectedIndex].value
-  );
-  unit = selectedUnit;
-  render(newFeedView);
-});
+  const template = `<ul>${newsList.join("")}</ul>`;
+  return render("newsFeed", template);
+}
 
-window.addEventListener("hashchange", (e) => {
+function newsDetail() {
   const id = location.hash.slice(1);
   const newsContent = getData(CONTENT_URL.replace("@id", id));
 
-  const template = () => `
+  const template = `
     <div>
-      <span><a href=/>홈으로</a></span>    
+      <span><a href=#>홈으로</a></span>    
       <section>
         <h1>${newsContent.title}</h1>
         <div>좋아요 : ${newsContent.points}</div>
@@ -51,7 +53,27 @@ window.addEventListener("hashchange", (e) => {
     </div>
   `;
 
-  render(template);
-});
+  return render("newsDetail", template);
+}
 
-render(newFeedView);
+function router() {
+  const routePath = location.hash;
+
+  if (routePath === "") {
+    $("#select").addEventListener("change", (e) => {
+      const selectedUnit = Number(
+        $("#select").options[$("#select").selectedIndex].value
+      );
+      unit = selectedUnit;
+      return newsFeed();
+    });
+
+    return newsFeed();
+  } else {
+    return newsDetail();
+  }
+}
+
+window.addEventListener("hashchange", router);
+
+window.addEventListener("DOMContentLoaded", router);
