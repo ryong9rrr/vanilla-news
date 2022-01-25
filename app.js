@@ -14,16 +14,13 @@ function getData(url) {
 
 const pageListTemplate = () => {
   const pageList = [`<nav><ul class="nav">`];
-  let start = 0;
-  if (store.currentPage <= 10) {
-    start = 1;
-  } else if (store.currentPage <= 20) {
-    start = 11;
-  } else {
-    start = 21;
-  }
+  const start = Math.floor((store.currentPage - 1) / 10) * 10 + 1;
   for (let i = start; i < start + 10; i++) {
-    pageList.push(`<li><a href="#/page/${i}">${i}</a></li>`);
+    if (i === store.currentPage) {
+      pageList.push(`<li class="current"><a href="#/page/${i}">${i}</a></li>`);
+    } else {
+      pageList.push(`<li><a href="#/page/${i}">${i}</a></li>`);
+    }
   }
   pageList.push(`</ul></nav>`);
 
@@ -34,14 +31,11 @@ const pageListTemplate = () => {
 
 function newsFeed() {
   const pagination = Math.floor((store.currentPage - 1) / 3) + 1;
-  console.log(pagination, store.currentPage);
   const newsFeedData = getData(NEWS_URL.replace("@pagination", pagination));
   const newsList = [];
-  for (
-    let i = ((store.currentPage - 1) % 3) * 10;
-    i < (((store.currentPage - 1) % 3) + 1) * 10;
-    i++
-  ) {
+  const table = [20, 0, 10];
+  const start = table[store.currentPage % 3];
+  for (let i = start; i < start + 10; i++) {
     newsList.push(`
         <li>
           <a href="#/show/${newsFeedData[i].id}">
