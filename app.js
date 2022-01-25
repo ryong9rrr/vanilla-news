@@ -1,8 +1,9 @@
 const $ = (selector) => document.querySelector(selector);
-const NEWS_URL = "https://api.hnpwa.com/v0/news/1.json";
+const NEWS_URL = "https://api.hnpwa.com/v0/news/@pagination.json";
 const CONTENT_URL = `https://api.hnpwa.com/v0/item/@id.json`;
-let unit = 10;
-let page = 1;
+const store = {
+  currentPage: 1,
+};
 
 function getData(url) {
   const ajax = new XMLHttpRequest();
@@ -11,40 +12,69 @@ function getData(url) {
   return JSON.parse(ajax.response);
 }
 
-const newsFeedData = getData(NEWS_URL);
+const pageListTemplate = () => {
+  const pageList = [`<nav><ul class="nav">`];
+  let start = 0;
+  if (store.currentPage <= 10) {
+    start = 1;
+  } else if (store.currentPage <= 20) {
+    start = 11;
+  } else {
+    start = 21;
+  }
+  for (let i = start; i < start + 10; i++) {
+    pageList.push(`<li><a href="#/page/${i}">${i}</a></li>`);
+  }
+  pageList.push(`</ul></nav>`);
 
-function render(view, template) {
-  const $select = $("#select");
-  const page = {
-    newsFeed: () => ($select.hidden = false),
-    newsDetail: () => ($select.hidden = true),
-  };
-  page[view]();
-  return ($("#root").innerHTML = template);
-}
+  const template = pageList.join("");
+
+  return template;
+};
 
 function newsFeed() {
+  const pagination = Math.floor((store.currentPage - 1) / 3) + 1;
+  console.log(pagination, store.currentPage);
+  const newsFeedData = getData(NEWS_URL.replace("@pagination", pagination));
   const newsList = [];
-  for (let i = 0; i < unit; i++) {
+  for (
+    let i = ((store.currentPage - 1) % 3) * 10;
+    i < (((store.currentPage - 1) % 3) + 1) * 10;
+    i++
+  ) {
     newsList.push(`
         <li>
-          <a href="#${newsFeedData[i].id}">
+          <a href="#/show/${newsFeedData[i].id}">
             ${newsFeedData[i].title}(좋아요:${newsFeedData[i].points} / 댓글:${newsFeedData[i].comments_count})
           </a>
         </li>`);
   }
 
-  const template = `<ul>${newsList.join("")}</ul>`;
-  return render("newsFeed", template);
+  const template = `
+    <h1><a href="#">홈으로</a></h1>
+    <ul>${newsList.join("")}</ul>
+    <div>
+      <a href="#">⏪</a>
+      <a href="#/page/${
+        store.currentPage === 1 ? 1 : store.currentPage - 1
+      }">◀</a>
+      ${pageListTemplate()}
+      <a href="#/page/${
+        store.currentPage === 30 ? 30 : store.currentPage + 1
+      }">▶</a>
+      <a href="#/page/30">⏩</a>
+    </div>
+  `;
+  return ($("#root").innerHTML = template);
 }
 
 function newsDetail() {
-  const id = location.hash.slice(1);
+  const id = location.hash.slice(7);
   const newsContent = getData(CONTENT_URL.replace("@id", id));
 
   const template = `
     <div>
-      <span><a href=#>홈으로</a></span>    
+      <span><a href=#/page/${store.currentPage}>이전</a></span>    
       <section>
         <h1>${newsContent.title}</h1>
         <div>좋아요 : ${newsContent.points}</div>
@@ -53,21 +83,17 @@ function newsDetail() {
     </div>
   `;
 
-  return render("newsDetail", template);
+  return ($("#root").innerHTML = template);
 }
 
 function router() {
   const routePath = location.hash;
 
   if (routePath === "") {
-    $("#select").addEventListener("change", (e) => {
-      const selectedUnit = Number(
-        $("#select").options[$("#select").selectedIndex].value
-      );
-      unit = selectedUnit;
-      return newsFeed();
-    });
-
+    store.currentPage = 1;
+    return newsFeed();
+  } else if (routePath.indexOf("#/page/") >= 0) {
+    store.currentPage = Number(routePath.slice(7));
     return newsFeed();
   } else {
     return newsDetail();
