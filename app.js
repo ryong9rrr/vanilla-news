@@ -107,7 +107,11 @@ function newsFeed() {
       <section class="bg-blue-200 p-3">
         {{__news_feed__}}        
       </section>
+      <footer class="text-center p-5">
+        &copy; ryong9rrr, 용상윤
+      </footer>
     </div>
+    ${topButton()}
   `;
 
   let updatedTemplate = template;
@@ -120,6 +124,15 @@ function newsFeed() {
   );
 
   return (root.innerHTML = updatedTemplate);
+}
+
+function topButton() {
+  const template = `
+    <div class="fixed bottom-10 right-10 bg-gray-400 w-10 text-center">
+      <a href="#">TOP</a>
+    </div>
+  `;
+  return template;
 }
 
 function newsDetail() {
