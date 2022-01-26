@@ -17,6 +17,7 @@ function newsFeed() {
   const newsFeedData = getData(NEWS_URL.replace("@paging", paging));
 
   const makePagination = () => {
+    // 1 2 3 ... 9 10 을 만들어내는 함수
     const makePageNumbers = () => {
       const pageList = [];
       const start = Math.floor((store.currentPage - 1) / 10) * 10 + 1;
@@ -34,13 +35,13 @@ function newsFeed() {
 
     let template = `
       <nav>
-        <a href="#">처음</a>
-        <a href="#/page/{{__prev_page__}}">이전</a>
+        <a href="#">처음 페이지</a>
+        <a href="#/page/{{__prev_page__}}">이전 페이지</a>
         <ul>
           {{_pagination_}}
         </ul>
-        <a href="#/page/{{__next_page__}}">다음</a>
-        <a href="#/page/30">마지막</a>
+        <a href="#/page/{{__next_page__}}">다음 페이지</a>
+        <a href="#/page/30">마지막 페이지</a>
       </nav>
     `;
 
@@ -70,31 +71,39 @@ function newsFeed() {
     const start = table[store.currentPage % 3];
     for (let i = start; i < start + 10; i++) {
       newsList.push(`
-        <li>
-          <a href="#/show/${newsFeedData[i].id}">
-            ${newsFeedData[i].title}(좋아요:${newsFeedData[i].points} / 댓글:${newsFeedData[i].comments_count})
-          </a>
-        </li>`);
+        <article>
+          <div>
+           <span><a href="#/show/${newsFeedData[i].id}">${newsFeedData[i].title}</a></span>
+           <span>유저 : ${newsFeedData[i].user}</span>
+          </div>
+          <div>
+            <span>💬${newsFeedData[i].comments_count}</span>
+            <span>❤${newsFeedData[i].points}</span>
+            <span>🕗${newsFeedData[i].time_ago}</span>
+          </div>
+        </article>`);
     }
     return newsList.join("");
   };
 
   let template = `
     <div>
-      <h1>해커 뉴스</h1>
-      <ul>
-        {{_news_feed_}}
-      </ul>
-      {{_pagination_}}
+      <h1>📰 vanilla News</h1>
+      <section>
+        {{__news_feed__}}        
+      </section>
+      <div>
+        {{__pagination__}}
+      </div>
     </div>
   `;
 
   let updatedTemplate = template;
 
-  updatedTemplate = updatedTemplate.replace("{{_news_feed_}}", makeFeed());
+  updatedTemplate = updatedTemplate.replace("{{__news_feed__}}", makeFeed());
 
   updatedTemplate = updatedTemplate.replace(
-    "{{_pagination_}}",
+    "{{__pagination__}}",
     makePagination()
   );
 
