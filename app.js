@@ -1,9 +1,22 @@
-const root = document.getElementById("root");
 const NEWS_URL = "https://api.hnpwa.com/v0/news/@paging.json";
 const CONTENT_URL = `https://api.hnpwa.com/v0/item/@id.json`;
 const store = {
   currentPage: 1,
 };
+
+function render(view) {
+  const $root = document.getElementById("root");
+  let template = `
+    <main class="bg-gray-100 h-screen max-w-screen-md mx-auto">
+      {{__view__}}
+    </main>
+  `;
+
+  let updatedTemplate = template;
+  updatedTemplate = updatedTemplate.replace("{{__view__}}", view);
+
+  return ($root.innerHTML = updatedTemplate);
+}
 
 function getData(url) {
   const ajax = new XMLHttpRequest();
@@ -35,8 +48,9 @@ function newsFeed() {
       return pageList.join("");
     };
 
-    const CSS_pointer = (n) =>
-      store.currentPage === n ? "cursor-no-drop" : "hover:font-semibold";
+    const CSS_pointer = (n) => {
+      return store.currentPage === n ? "cursor-no-drop" : "hover:font-semibold";
+    };
 
     let template = `
       <nav class="flex justify-between mx-auto w-3/4">
@@ -96,7 +110,7 @@ function newsFeed() {
   };
 
   let template = `
-    <div class="bg-gray-100 h-screen max-w-screen-md mx-auto">
+    <div>
       <header class="bg-green-100 p-3 flex justify-between">
         <h1 class="text-4xl p-3">📰 Vanilla News</h1>
         <div>&copy;Hacker news API</div>
@@ -131,11 +145,31 @@ function newsDetail() {
 
   const template = `
     <div>
-      <span><a href=#/page/${store.currentPage}>이전</a></span>    
-      <section>
-        <h1>${newsContent.title}</h1>
-        <div>좋아요 : ${newsContent.points}</div>
-        <div>댓글 수 : ${newsContent.comments_count}</div>
+      <nav class="px-6 pt-6">
+        <a href=#/page/${store.currentPage}>
+          <span class="rounded-lg border-2 p-2 text-lg shadow-md transition-colors duration-500 hover:bg-red-100">◀ Back</span>
+        </a>
+      </nav>
+      <section class="p-6">
+        <h1 class="text-4xl mb-3">${newsContent.title}</h1>
+        <h3 class="mb-3 text-right">👋 ${newsContent.user}</h3>
+        <h3 class="mb-3 text-right">❤ ${newsContent.points}</h3>
+        <div class="mb-6">
+          <h2 class="text-3xl mb-6">Content</h2>
+          ${
+            newsContent.content.length === 0
+              ? "🙊 oh, content is empty..."
+              : newsContent.content
+          }
+        </div>
+        <div>
+          <div class="mb-6 pb-3 border-b-2 border-slate-600 flex justify-between">
+            <strong>Comments</strong>
+            <span class="text-right">💬 ${newsContent.comments_count}</span>
+          </div>
+          {{__comments__}}
+          ${newsContent.comments}
+        </div>
       </section>
     </div>
   `;
@@ -148,12 +182,12 @@ function router() {
 
   if (routePath === "") {
     store.currentPage = 1;
-    return newsFeed();
+    return render(newsFeed());
   } else if (routePath.indexOf("#/page/") >= 0) {
     store.currentPage = Number(routePath.slice(7));
-    return newsFeed();
+    return render(newsFeed());
   } else {
-    return newsDetail();
+    return render(newsDetail());
   }
 }
 
