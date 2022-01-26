@@ -152,8 +152,9 @@ function newsDetail() {
       </nav>
       <section class="p-6">
         <h1 class="text-4xl mb-3">${newsContent.title}</h1>
-        <h3 class="mb-3 text-right">👋 ${newsContent.user}</h3>
-        <h3 class="mb-3 text-right">❤ ${newsContent.points}</h3>
+        <h3 class="mb-1 text-right">👋 ${newsContent.user}</h3>
+        <h3 class="mb-1 text-right">❤ ${newsContent.points}</h3>
+        <h3 class="mb-1 text-right">🕥 ${newsContent.time_ago}</h3>
         <div class="mb-6">
           <h2 class="text-3xl mb-6">Content</h2>
           ${
