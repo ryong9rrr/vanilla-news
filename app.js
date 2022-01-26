@@ -24,24 +24,29 @@ function newsFeed() {
       for (let i = start; i < start + 10; i++) {
         if (i === store.currentPage) {
           pageList.push(
-            `<li><a href="#/page/${i}"><strong>${i}</strong></a></li>`
+            `<li class="mx-2 hover:font-semibold"><a href="#/page/${i}"><strong>${i}</strong></a></li>`
           );
         } else {
-          pageList.push(`<li><a href="#/page/${i}">${i}</a></li>`);
+          pageList.push(
+            `<li class="mx-2 hover:font-semibold"><a href="#/page/${i}">${i}</a></li>`
+          );
         }
       }
       return pageList.join("");
     };
 
+    const CSS_pointer = (n) =>
+      store.currentPage === n ? "cursor-no-drop" : "hover:font-semibold";
+
     let template = `
-      <nav>
-        <a href="#">처음 페이지</a>
-        <a href="#/page/{{__prev_page__}}">이전 페이지</a>
-        <ul>
+      <nav class="flex justify-between mx-auto w-3/4">
+        <a class="${CSS_pointer(1)}" href="#">first</a>
+        <a class="${CSS_pointer(1)}" href="#/page/{{__prev_page__}}">prev</a>
+        <ul class="flex">
           {{_pagination_}}
         </ul>
-        <a href="#/page/{{__next_page__}}">다음 페이지</a>
-        <a href="#/page/30">마지막 페이지</a>
+        <a class="${CSS_pointer(30)}" href="#/page/{{__next_page__}}">next</a>
+        <a class="${CSS_pointer(30)}" href="#/page/30">last</a>
       </nav>
     `;
 
@@ -71,30 +76,37 @@ function newsFeed() {
     const start = table[store.currentPage % 3];
     for (let i = start; i < start + 10; i++) {
       newsList.push(`
-        <article>
-          <div>
-           <span><a href="#/show/${newsFeedData[i].id}">${newsFeedData[i].title}</a></span>
-           <span>유저 : ${newsFeedData[i].user}</span>
-          </div>
-          <div>
-            <span>💬${newsFeedData[i].comments_count}</span>
-            <span>❤${newsFeedData[i].points}</span>
-            <span>🕗${newsFeedData[i].time_ago}</span>
-          </div>
-        </article>`);
+        <a href="#/show/${newsFeedData[i].id}">  
+          <article class="mb-3 flex p-4 rounded-lg bg-gray-100 shadow-md transition-colors duration-500 hover:bg-green-100">
+              <div class="w-10/12">
+              <h2 class="font-mono mb-2 text-2xl">${newsFeedData[i].title}</h2>
+              <h3 class="mb-1">👋 ${newsFeedData[i].user}</h3>
+              <h3 class="text-sm">🕗 ${newsFeedData[i].time_ago}</h3>
+              </div>
+              <div class="flex justify-center items-center w-2/12">
+                <div>
+                  <h3 class="text-left mb-3">❤ ${newsFeedData[i].points}</h3>
+                  <h3 class="text-left">💬 ${newsFeedData[i].comments_count}</h3>
+                </div>
+              </div>
+          </article>
+        </a>`);
     }
     return newsList.join("");
   };
 
   let template = `
-    <div>
-      <h1>📰 vanilla News</h1>
-      <section>
-        {{__news_feed__}}        
-      </section>
-      <div>
+    <div class="bg-gray-100 h-screen max-w-screen-md mx-auto">
+      <header class="bg-green-100 p-3 flex justify-between">
+        <h1 class="text-4xl p-3">📰 Vanilla News</h1>
+        <div>&copy;Hacker news API</div>
+      </header>
+      <div class="bg-pink-100 p-3">
         {{__pagination__}}
       </div>
+      <section class="bg-blue-200 p-3">
+        {{__news_feed__}}        
+      </section>
     </div>
   `;
 
