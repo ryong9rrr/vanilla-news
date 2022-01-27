@@ -2,6 +2,7 @@ const NEWS_URL = "https://api.hnpwa.com/v0/news/@paging.json";
 const CONTENT_URL = `https://api.hnpwa.com/v0/item/@id.json`;
 const store = {
   currentPage: 1,
+  isRead: {},
 };
 
 const scrollToTop = () => window.scrollTo(0, 0);
@@ -19,10 +20,8 @@ function render(view) {
     </main>
   `;
 
-  let updatedTemplate = template;
-  updatedTemplate = updatedTemplate.replace("{{__view__}}", view);
+  const updatedTemplate = template.replace("{{__view__}}", view);
   scrollToTop();
-
   return ($root.innerHTML = updatedTemplate);
 }
 
@@ -39,7 +38,7 @@ function newsFeed() {
 
   const makePagination = () => {
     // 1 2 3 ... 9 10 을 만들어내는 함수
-    const makePageNumbers = () => {
+    const makePageList = () => {
       const pageList = [];
       const start = Math.floor((store.currentPage - 1) / 10) * 10 + 1;
       for (let i = start; i < start + 10; i++) {
@@ -65,7 +64,7 @@ function newsFeed() {
         <a class="${CSS_pointer(1)}" href="#">first</a>
         <a class="${CSS_pointer(1)}" href="#/page/{{__prev_page__}}">prev</a>
         <ul class="flex">
-          {{_pagination_}}
+          {{__page_list__}}
         </ul>
         <a class="${CSS_pointer(30)}" href="#/page/{{__next_page__}}">next</a>
         <a class="${CSS_pointer(30)}" href="#/page/30">last</a>
@@ -75,11 +74,6 @@ function newsFeed() {
     let updatedTemplate = template;
 
     updatedTemplate = updatedTemplate.replace(
-      "{{_pagination_}}",
-      makePageNumbers()
-    );
-
-    updatedTemplate = updatedTemplate.replace(
       "{{__prev_page__}}",
       store.currentPage === 1 ? 1 : store.currentPage - 1
     );
@@ -87,6 +81,11 @@ function newsFeed() {
     updatedTemplate = updatedTemplate.replace(
       "{{__next_page__}}",
       store.currentPage === 30 ? 30 : store.currentPage + 1
+    );
+
+    updatedTemplate = updatedTemplate.replace(
+      "{{__page_list__}}",
+      makePageList()
     );
 
     return updatedTemplate;
@@ -99,7 +98,11 @@ function newsFeed() {
     for (let i = start; i < start + 10; i++) {
       newsList.push(`
         <a href="#/show/${newsFeedData[i].id}">  
-          <article class="mb-3 flex p-4 rounded-lg bg-gray-100 shadow-md transition-colors duration-500 hover:bg-green-100">
+          <article class="${
+            store.isRead[newsFeedData[i].id]
+              ? "bg-gray-400"
+              : "bg-gray-100 transition-colors duration-500 hover:bg-green-100"
+          } mb-3 flex p-4 rounded-lg shadow-md">
               <div class="w-10/12">
               <h2 class="font-mono mb-2 text-2xl">${newsFeedData[i].title}</h2>
               <h3 class="mb-1">👋 ${newsFeedData[i].user}</h3>
@@ -151,22 +154,23 @@ function newsDetail() {
   const id = location.hash.slice(7);
   const newsContent = getData(CONTENT_URL.replace("@id", id));
 
-  function makeComment(comments) {
-    if (comments.length == 0) return;
+  function makeComment(comments, depth = 0) {
+    if (comments.length === 0) return;
     const commentsList = comments.map((comment) => {
       const template = `
-        <div style="padding-left:${comment.level * 10}px" class="text-sm">
+        <div style="padding-left:${depth * 10}px" class="text-sm">
           <div class="flex justify-between items-center text-base p-1 bg-green-100">
-            <h3 class="mr-3">${
-              comment.level > 0 ? "▶" : ""
-            } ${randomUserImg()}<strong>${comment.user}</strong></h3>
+            <h3>${comment.level > 0 ? "▶" : ""} ${randomUserImg()}
+              <strong>${comment.user}</strong>
+              <span class="text-sm text-gray-600">${comment.time_ago}</span>
+            </h3>
             <h3>🗨 ${comment.comments_count}</h3>
           </div>
           <div class="w-full box-border p-3">
             ${comment.content}
           </div>
           <div class="w-full box-border">
-            ${makeComment(comment.comments)}
+            ${makeComment(comment.comments, depth + 1)}
           </div>
         </div>
       `;
@@ -181,7 +185,7 @@ function newsDetail() {
     return commentsHtml;
   }
 
-  const template = `
+  let template = `
     <div>
       <nav class="px-6 pt-6">
         <a href=#/page/${store.currentPage}>
@@ -207,18 +211,23 @@ function newsDetail() {
             <span class="text-right">🗨 ${newsContent.comments_count}</span>
           </div>
           <div>
-            ${
-              newsContent.comments.length > 0
-                ? makeComment(newsContent.comments)
-                : "No comments yet... Leave the first comment!"
-            }
+            {{__comments__}}
           </div>
         </div>
       </section>
     </div>
   `;
 
-  return (root.innerHTML = template);
+  store.isRead[Number(id)] = true;
+
+  const updatedTemplate = template.replace(
+    "{{__comments__}}",
+    newsContent.comments.length > 0
+      ? makeComment(newsContent.comments)
+      : "No comments yet... Leave the first comment!"
+  );
+
+  return (root.innerHTML = updatedTemplate);
 }
 
 function router() {
