@@ -4,16 +4,24 @@ const store = {
   currentPage: 1,
 };
 
+const scrollToTop = () => window.scrollTo(0, 0);
+
+const randomUserImg = () => {
+  const n = Math.floor(Math.random() * 10);
+  return n % 2 ? "🙋‍♂️" : "🙋";
+};
+
 function render(view) {
   const $root = document.getElementById("root");
   let template = `
-    <main class="bg-gray-100 h-screen max-w-screen-md mx-auto">
+    <main class="bg-gray-100 max-w-screen-md mx-auto box-border">
       {{__view__}}
     </main>
   `;
 
   let updatedTemplate = template;
   updatedTemplate = updatedTemplate.replace("{{__view__}}", view);
+  scrollToTop();
 
   return ($root.innerHTML = updatedTemplate);
 }
@@ -100,7 +108,7 @@ function newsFeed() {
               <div class="flex justify-center items-center w-2/12">
                 <div>
                   <h3 class="text-left mb-3">❤ ${newsFeedData[i].points}</h3>
-                  <h3 class="text-left">💬 ${newsFeedData[i].comments_count}</h3>
+                  <h3 class="text-left">🗨 ${newsFeedData[i].comments_count}</h3>
                 </div>
               </div>
           </article>
@@ -143,6 +151,36 @@ function newsDetail() {
   const id = location.hash.slice(7);
   const newsContent = getData(CONTENT_URL.replace("@id", id));
 
+  function makeComment(comments) {
+    if (comments.length == 0) return;
+    const commentsList = comments.map((comment) => {
+      const template = `
+        <div style="padding-left:${comment.level * 10}px" class="text-sm">
+          <div class="flex justify-between items-center text-base p-1 bg-green-100">
+            <h3 class="mr-3">${
+              comment.level > 0 ? "▶" : ""
+            } ${randomUserImg()}<strong>${comment.user}</strong></h3>
+            <h3>🗨 ${comment.comments_count}</h3>
+          </div>
+          <div class="w-full box-border p-3">
+            ${comment.content}
+          </div>
+          <div class="w-full box-border">
+            ${makeComment(comment.comments)}
+          </div>
+        </div>
+      `;
+
+      return template;
+    });
+
+    const commentsHtml = commentsList
+      .join("")
+      .replace(/<pre>|<\/pre>|<code>|<\/code>/g, "\n");
+
+    return commentsHtml;
+  }
+
   const template = `
     <div>
       <nav class="px-6 pt-6">
@@ -166,10 +204,15 @@ function newsDetail() {
         <div>
           <div class="mb-6 pb-3 border-b-2 border-slate-600 flex justify-between">
             <strong>Comments</strong>
-            <span class="text-right">💬 ${newsContent.comments_count}</span>
+            <span class="text-right">🗨 ${newsContent.comments_count}</span>
           </div>
-          {{__comments__}}
-          ${newsContent.comments}
+          <div>
+            ${
+              newsContent.comments.length > 0
+                ? makeComment(newsContent.comments)
+                : "No comments yet... Leave the first comment!"
+            }
+          </div>
         </div>
       </section>
     </div>
@@ -196,6 +239,4 @@ window.addEventListener("hashchange", router);
 
 window.addEventListener("DOMContentLoaded", router);
 
-document
-  .getElementById("go-top")
-  .addEventListener("click", () => window.scrollTo(0, 0));
+document.getElementById("go-top").addEventListener("click", scrollToTop);
