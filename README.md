@@ -2,19 +2,45 @@
 
 [해커뉴스 API](https://github.com/tastejs/hacker-news-pwas/blob/master/docs/api.md)를 활용한 간단한 뉴스 앱
 
----
+</br>
 
 <img />
 
-👉 [데모 링크](#)
+👋 [프로젝트 링크](#)
 
-## 🛠 Stack
+<table>
+    <thead>
+        <tr>
+            <th colspan="2" style="text-align: center">
+                🛠 Skills & Tools
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="text-align: center">Language</td>
+            <td>Vanilla JS | TypeScript</td>
+        </tr>
+        <tr>
+            <td style="text-align: center">Style</td>
+            <td>Tailwind CSS</td>
+        </tr>
+        <tr>
+            <td style="text-align: center">Test</td>
+            <td>Cypress</td>
+        </tr>
+        <tr>
+            <td style="text-align: center">Data</td>
+            <td><a href="https://github.com/tastejs/hacker-news-pwas/blob/master/docs/api.md">해커뉴스 API</a></td>
+        </tr>
+        <tr>
+            <td style="text-align: center">keywords</td>
+            <td>Vanilla JS | Tailwind CSS | TDD | 상태 관리</br> AJAX | 동기-비동기 | 문자열 템플릿 | TS Migration</td>
+        </tr>
+    </tbody>
+</table>
 
-- Vanilla JS
-
-## 🎨 UI
-
-- Tailwind CSS
+</br>
 
 ## ❓ 이 프로젝트의 목적
 
@@ -32,31 +58,7 @@
 
 ✔ 타입스크립트 연습을 위해
 
-<table>
-    <thead>
-        <tr>
-            <th colspan="2" style="text-align: center">
-                생각해보기
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td style="text-align: center">🤔</td>
-            <td><a href="#">문제 해결 전략</a></td>
-        </tr>
-        <tr>
-            <td style="text-align: center">🛠</td>
-            <td><a href="#">리팩터링</a></td>
-        </tr>
-        <tr>
-            <td style="text-align: center">💡</td>
-            <td><a href="#">회고</a></td>
-        </tr>
-    </tbody>
-</table>
-
----
+</br>
 
 # 🎯 요구사항
 
@@ -120,3 +122,31 @@
 ✔ 데이터가 빈 값일 경우를 고려합니다.
 
 ◻ 대댓글에는 "깊이"가 있어 어떤 댓글의 대댓글인지 직관적으로 알 수 있어야 합니다.
+
+</br>
+
+# 과정
+
+<table>
+    <thead>
+        <tr>
+            <th colspan="2" style="text-align: center">
+                생각해보기
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td style="text-align: center">🤔</td>
+            <td><a href="#">문제 해결 전략</a></td>
+        </tr>
+        <tr>
+            <td style="text-align: center">🛠</td>
+            <td><a href="#">리팩터링</a></td>
+        </tr>
+        <tr>
+            <td style="text-align: center">💡</td>
+            <td><a href="#">회고</a></td>
+        </tr>
+    </tbody>
+</table>
