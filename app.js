@@ -29,6 +29,12 @@ function getData(url) {
   const ajax = new XMLHttpRequest();
   ajax.open("GET", url, false);
   ajax.send();
+  if (ajax.readyState !== 4 || ajax.status !== 200) {
+    console.log(ajax.statusText);
+    return new Error(
+      "지금 해커뉴스가 API를 제공하고 있는 서버에 문제가 생긴 것 같아요 😥"
+    );
+  }
   return JSON.parse(ajax.response);
 }
 
@@ -60,14 +66,16 @@ function newsFeed() {
     };
 
     let template = `
-      <nav class="flex justify-between mx-auto w-3/4">
-        <a class="${CSS_pointer(1)}" href="#">first</a>
-        <a class="${CSS_pointer(1)}" href="#/page/{{__prev_page__}}">prev</a>
-        <ul class="flex">
-          {{__page_list__}}
-        </ul>
-        <a class="${CSS_pointer(30)}" href="#/page/{{__next_page__}}">next</a>
-        <a class="${CSS_pointer(30)}" href="#/page/30">last</a>
+      <nav class="flex justify-center box-border">
+        <div class="flex">
+          <a class="${CSS_pointer(1)} mr-4" href="#">first</a>
+          <a class="${CSS_pointer(1)}" href="#/page/{{__prev_page__}}">prev</a>
+          <ul class="flex">
+            {{__page_list__}}
+          </ul>
+          <a class="${CSS_pointer(30)}" href="#/page/{{__next_page__}}">next</a>
+          <a class="${CSS_pointer(30)} ml-4" href="#/page/30">last</a>
+        </div>
       </nav>
     `;
 
@@ -231,21 +239,30 @@ function newsDetail() {
 }
 
 function router() {
-  const routePath = location.hash;
+  try {
+    const routePath = location.hash;
 
-  if (routePath === "") {
-    store.currentPage = 1;
-    return render(newsFeed());
-  } else if (routePath.indexOf("#/page/") >= 0) {
-    store.currentPage = Number(routePath.slice(7));
-    return render(newsFeed());
-  } else {
-    return render(newsDetail());
+    if (routePath === "") {
+      store.currentPage = 1;
+      return render(newsFeed());
+    } else if (routePath.indexOf("#/page/") >= 0) {
+      store.currentPage = Number(routePath.slice(7));
+      return render(newsFeed());
+    } else {
+      return render(newsDetail());
+    }
+  } catch (e) {
+    return render(e);
   }
 }
 
-window.addEventListener("hashchange", router);
+class App {
+  run = () => {
+    window.addEventListener("hashchange", router);
+    window.addEventListener("DOMContentLoaded", router);
+    document.getElementById("go-top").addEventListener("click", scrollToTop);
+  };
+}
 
-window.addEventListener("DOMContentLoaded", router);
-
-document.getElementById("go-top").addEventListener("click", scrollToTop);
+const app = new App();
+app.run();

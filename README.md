@@ -6,7 +6,7 @@
 
 <img />
 
-👋 [프로젝트 링크](#)
+👋 [프로젝트 링크](https://ryong9rrr.github.io/projects/news-app/)
 
 <table>
     <thead>
@@ -141,22 +141,26 @@
     <thead>
         <tr>
             <th colspan="2" style="text-align: center">
-                생각해보기
+                생각하고 정리하기
             </th>
         </tr>
     </thead>
     <tbody>
         <tr>
             <td style="text-align: center">🤔</td>
-            <td><a href="#">문제 해결 전략</a></td>
+            <td><a href="https://www.notion.so/ryong9rrr/78ab69ee94ee464aae5d934987eb38cf">기능 요구 사항에 따른 전략과 복기</a></td>
+        </tr>
+        <tr>
+            <td style="text-align: center">⚠</td>
+            <td><a href="https://www.notion.so/ryong9rrr/aebcd33b8a1f4125bdaf25bd4bf02611">이슈</a></td>
         </tr>
         <tr>
             <td style="text-align: center">🛠</td>
-            <td><a href="#">리팩터링</a></td>
+            <td><a href="https://www.notion.so/ryong9rrr/Test-8b3a88cabcc046acb3ca8ab631ecfb02">Test & 리팩터링</a></td>
         </tr>
         <tr>
             <td style="text-align: center">💡</td>
-            <td><a href="#">회고</a></td>
+            <td><a href="https://www.notion.so/ryong9rrr/cb6b75e224724d9f8e5d147adae9536c">회고</a></td>
         </tr>
     </tbody>
 </table>
