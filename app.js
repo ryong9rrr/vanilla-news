@@ -30,8 +30,7 @@ function getData(url) {
   ajax.open("GET", url, false);
   ajax.send();
   if (ajax.readyState !== 4 || ajax.status !== 200) {
-    console.log(ajax.statusText);
-    return new Error(
+    throw new Error(
       "지금 해커뉴스가 API를 제공하고 있는 서버에 문제가 생긴 것 같아요 😥"
     );
   }
@@ -70,7 +69,7 @@ function newsFeed() {
         <div class="flex">
           <a class="${CSS_pointer(1)} mr-4" href="#">first</a>
           <a class="${CSS_pointer(1)}" href="#/page/{{__prev_page__}}">prev</a>
-          <ul class="flex">
+          <ul id="pagination-list" class="flex">
             {{__page_list__}}
           </ul>
           <a class="${CSS_pointer(30)}" href="#/page/{{__next_page__}}">next</a>
@@ -197,7 +196,7 @@ function newsDetail() {
     <div>
       <nav class="px-6 pt-6">
         <a href=#/page/${store.currentPage}>
-          <span class="rounded-lg border-2 p-2 text-lg shadow-md transition-colors duration-500 hover:bg-red-100">◀ Back</span>
+          <span id="go-back" class="rounded-lg border-2 p-2 text-lg shadow-md transition-colors duration-500 hover:bg-red-100">◀ Back</span>
         </a>
       </nav>
       <section class="p-6">
