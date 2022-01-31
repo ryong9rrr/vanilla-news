@@ -30,17 +30,17 @@ describe("뉴스 앱 테스트", () => {
     cy.visit("http://127.0.0.1:5500/index.html");
   });
 
-  it("첫 페이지인지 확인", () => {
+  it("처음 시작은 첫 페이지이다.", () => {
     cy.hash().should("be.empty");
   });
 
-  context("data fetch test1", () => {
-    it("1.json 데이터가 잘 불러와졌는지 확인", () => {
+  context("Request test", () => {
+    it("1.json 데이터가 잘 불러와지는지 확인", () => {
       checkRequest(NEWS_URL(1));
     });
   });
 
-  context("pagination URL test", () => {
+  context("pagination test 1", () => {
     it("1페이지 pagination은 1 ~ 10 이어야 한다.", () => {
       checkPagination("1", "10");
     });
@@ -72,7 +72,7 @@ describe("뉴스 앱 테스트", () => {
     });
   });
 
-  context("pagination UX test", () => {
+  context("pagination test 2", () => {
     it("1페이지에서 first 버튼을 눌러도 첫 페이지여야 한다.", () => {
       clickedButton("first");
       checkHash("#");
@@ -98,25 +98,8 @@ describe("뉴스 앱 테스트", () => {
     });
   });
 
-  context("data fetch test 2", () => {
-    it("1 페이지에서는 1.json 데이터를 불러와야한다.", () => {
-      clickedButton("last");
-      checkRequest(NEWS_URL(1));
-    });
-
-    it("마지막 페이지에서는 10.json 데이터를 불러와야한다.", () => {
-      clickedButton("last");
-      checkRequest(NEWS_URL(10));
-    });
-
-    it("10페이지에서는 4.json 데이터를 불러와야한다.", () => {
-      clickedButton("10");
-      checkRequest(NEWS_URL(4));
-    });
-  });
-
-  context("newsDetail test", () => {
-    it("1페이지 맨 위 데이터를 클릭했을 때, url과 패칭된 데이터를 확인", () => {
+  context("data fetch test", () => {
+    it("1페이지에서, 1.json[0]과 첫번째 article이 일치하는지 확인", () => {
       cy.get("article").first().click();
       cy.request(NEWS_URL(1))
         .then((response) => {
@@ -124,13 +107,51 @@ describe("뉴스 앱 테스트", () => {
           return data;
         })
         .then((data) => {
-          const id = data.id;
+          const { id, title } = data;
           checkHash(`#/show/${id}`);
-          checkRequest(CONTENT_URL(id));
+          cy.get("h1").should("have.text", title);
         });
     });
 
+    it("10페이지에서, 4.json[0]과 첫번째 article이 일치하는지 확인", () => {
+      clickedButton(10);
+      cy.get("article").first().click();
+      cy.request(NEWS_URL(4))
+        .then((response) => {
+          const data = Cypress._.chain(response.body).first().value();
+          return data;
+        })
+        .then((data) => {
+          const id = data.id;
+          checkHash(`#/show/${id}`);
+        });
+    });
+
+    it("마지막 페이지에서, 10.json[29]과 마지막 article이 일치하는지 확인", () => {
+      clickedButton("last");
+      cy.get("article").last().click();
+      cy.request(NEWS_URL(10))
+        .then((response) => {
+          const data = Cypress._.chain(response.body).last().value();
+          return data;
+        })
+        .then((data) => {
+          const id = data.id;
+          checkHash(`#/show/${id}`);
+        });
+    });
+  });
+
+  context("UI와 상태관리 test", () => {
     it("1페이지 맨 위 데이터를 클릭하고 뒤로 가기를 눌렀을 때, '읽음' 확인", () => {
+      cy.get("article").first().should("have.class", "bg-gray-100");
+      cy.get("article").first().click();
+      cy.get("#go-back").click();
+      cy.get("article").first().should("have.class", "bg-gray-400");
+    });
+
+    it("10페이지 맨 위 데이터를 클릭하고 뒤로 가기를 눌렀을 때, '읽음' 확인", () => {
+      clickedButton(10);
       cy.get("article").first().should("have.class", "bg-gray-100");
       cy.get("article").first().click();
       cy.get("#go-back").click();
