@@ -49,7 +49,7 @@ function newsFeed() {
       for (let i = start; i < start + 10; i++) {
         if (i === store.currentPage) {
           pageList.push(
-            `<li class="mx-2 hover:font-semibold"><a href="#/page/${i}"><strong>${i}</strong></a></li>`
+            `<li id="current-page" class="mx-2 hover:font-semibold"><a href="#/page/${i}"><strong>${i}</strong></a></li>`
           );
         } else {
           pageList.push(

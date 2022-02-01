@@ -143,6 +143,12 @@ describe("뉴스 앱 테스트", () => {
   });
 
   context("UI와 상태관리 test", () => {
+    it("현재 페이지는 굵게 표시되어야 한다.", () => {
+      cy.get("#current-page").should("have.text", "1");
+      clickedButton(5);
+      cy.get("#current-page").should("have.text", "5");
+    });
+
     it("1페이지 맨 위 데이터를 클릭하고 뒤로 가기를 눌렀을 때, '읽음' 확인", () => {
       cy.get("article").first().should("have.class", "bg-gray-100");
       cy.get("article").first().click();
