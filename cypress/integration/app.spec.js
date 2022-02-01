@@ -158,4 +158,18 @@ describe("뉴스 앱 테스트", () => {
       cy.get("article").first().should("have.class", "bg-gray-400");
     });
   });
+
+  context("스크롤 test", () => {
+    it("뉴스 정보에 들어갔을 때 스크롤이 맨 위에 위치하는지 확인", () => {
+      //clickedButton("last");
+      cy.get("article").last().click();
+      cy.window().its("scrollY").should("eq", 0);
+    });
+
+    it("우측 하단 top 버튼 테스트", () => {
+      cy.scrollTo("bottom");
+      cy.get("#go-top").click();
+      cy.window().its("scrollY").should("eq", 0);
+    });
+  });
 });

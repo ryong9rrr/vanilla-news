@@ -4,7 +4,9 @@
 
 </br>
 
-<img />
+<img src="./img/testing.gif"/>
+
+(테스트 중인 모습)
 
 👋 [프로젝트 링크](https://ryong9rrr.github.io/projects/news-app/)
 
@@ -156,7 +158,7 @@
         </tr>
         <tr>
             <td style="text-align: center">🛠</td>
-            <td><a href="https://www.notion.so/ryong9rrr/Test-8b3a88cabcc046acb3ca8ab631ecfb02">Test & 리팩터링</a></td>
+            <td><a href="https://www.notion.so/ryong9rrr/Test-8b3a88cabcc046acb3ca8ab631ecfb02">Test</a></td>
         </tr>
         <tr>
             <td style="text-align: center">💡</td>
