@@ -1,27 +1,65 @@
 import { makeRandomUser, scrollToTop } from "./js/utils.js";
-
-const NEWS_URL = "https://api.hnpwa.com/v0/news/@paging.json";
-const CONTENT_URL = `https://api.hnpwa.com/v0/item/@id.json`;
 const store = {
   currentPage: 1,
+  feeds: {},
   isRead: {},
 };
 
-const CSS_pointer = (n) => {
-  return store.currentPage === n ? "cursor-no-drop" : "hover:font-semibold";
-};
-
-// api
-function getData(url) {
-  const ajax = new XMLHttpRequest();
-  ajax.open("GET", url, false);
-  ajax.send();
-  if (ajax.readyState !== 4 || ajax.status !== 200) {
-    throw new Error(
-      "지금 해커뉴스가 API를 제공하고 있는 서버에 문제가 생긴 것 같아요 😥"
-    );
+class App {
+  constructor(root) {
+    this.$root = document.getElementById(root);
   }
-  return JSON.parse(ajax.response);
+
+  _getData = (url) => {
+    const ajax = new XMLHttpRequest();
+    ajax.open("GET", url, false);
+    ajax.send();
+    if (ajax.readyState !== 4 || ajax.status !== 200) {
+      throw new Error(
+        "지금 해커뉴스가 API를 제공하고 있는 서버에 문제가 생긴 것 같아요 😥"
+      );
+    }
+    return JSON.parse(ajax.response);
+  };
+
+  #render = (view) => {
+    let template = `
+    <main class="bg-gray-100 max-w-screen-md mx-auto box-border">
+      {{__view__}}
+    </main>
+  `;
+
+    const updatedTemplate = template.replace("{{__view__}}", view);
+    scrollToTop();
+    return (this.$root.innerHTML = updatedTemplate);
+  };
+
+  #router = () => {
+    try {
+      const routePath = location.hash;
+
+      if (routePath === "") {
+        store.currentPage = 1;
+        const { newsFeed } = new NewsFeed();
+        return this.#render(newsFeed());
+      } else if (routePath.indexOf("#/page/") >= 0) {
+        store.currentPage = Number(routePath.slice(7));
+        const { newsFeed } = new NewsFeed();
+        return this.#render(newsFeed());
+      } else {
+        const { newsDetail } = new NewsDetail();
+        return this.#render(newsDetail);
+      }
+    } catch (e) {
+      return this.#render(e);
+    }
+  };
+
+  run = () => {
+    window.addEventListener("hashchange", this.#router);
+    window.addEventListener("DOMContentLoaded", this.#router);
+    document.getElementById("go-top").addEventListener("click", scrollToTop);
+  };
 }
 
 class Pagination {
@@ -42,17 +80,25 @@ class Pagination {
     return pageList.join("");
   };
 
+  #CSS_pointer = (n) => {
+    return store.currentPage === n ? "cursor-no-drop" : "hover:font-semibold";
+  };
+
   pagination = () => {
     let template = `
       <nav class="flex justify-center box-border">
         <div class="flex">
-          <a class="${CSS_pointer(1)} mr-4" href="#">first</a>
-          <a class="${CSS_pointer(1)}" href="#/page/{{__prev_page__}}">prev</a>
+          <a class="${this.#CSS_pointer(1)} mr-4" href="#">first</a>
+          <a class="${this.#CSS_pointer(
+            1
+          )}" href="#/page/{{__prev_page__}}">prev</a>
           <ul id="pagination-list" class="flex">
             {{__page_list__}}
           </ul>
-          <a class="${CSS_pointer(30)}" href="#/page/{{__next_page__}}">next</a>
-          <a class="${CSS_pointer(30)} ml-4" href="#/page/30">last</a>
+          <a class="${this.#CSS_pointer(
+            30
+          )}" href="#/page/{{__next_page__}}">next</a>
+          <a class="${this.#CSS_pointer(30)} ml-4" href="#/page/30">last</a>
         </div>
       </nav>
     `;
@@ -78,17 +124,40 @@ class Pagination {
   };
 }
 
-class NewsFeed {
+class NewsFeed extends App {
   constructor() {
+    super();
+    this.url = "https://api.hnpwa.com/v0/news/@paging.json";
     this.paging = Math.floor((store.currentPage - 1) / 3) + 1;
-    this.newsFeedData = getData(NEWS_URL.replace("@paging", this.paging));
+    this.newsFeedData = store.feeds;
+    if (
+      store.feeds.length === 0 ||
+      !store.feeds[(store.currentPage - 1) * 10]
+    ) {
+      const data = this.#makeFeeds(
+        this._getData(this.url.replace("@paging", this.paging)),
+        this.paging
+      );
+      this.newsFeedData = store.feeds = { ...store.feeds, ...data };
+    }
   }
+
+  #makeFeeds = (obj, paging) => {
+    const feeds = {};
+    let i = 0;
+    for (let id = (paging - 1) * 30; id < paging * 30; id++) {
+      feeds[id] = obj[i++];
+    }
+    return feeds;
+  };
 
   #makeFeed = () => {
     const newsList = [];
-    const table = [20, 0, 10];
-    const start = table[store.currentPage % 3];
-    for (let i = start; i < start + 10; i++) {
+    for (
+      let i = (store.currentPage - 1) * 10;
+      i < store.currentPage * 10;
+      i++
+    ) {
       newsList.push(`
         <a href="#/show/${this.newsFeedData[i].id}">  
           <article class="${
@@ -156,10 +225,12 @@ class NewsFeed {
   };
 }
 
-class NewsDetail {
+class NewsDetail extends App {
   constructor() {
+    super();
+    this.url = `https://api.hnpwa.com/v0/item/@id.json`;
     this.id = location.hash.slice(7);
-    this.newsContent = getData(CONTENT_URL.replace("@id", this.id));
+    this.newsContent = this._getData(this.url.replace("@id", this.id));
   }
 
   #makeComment = (comments, depth = 0) => {
@@ -235,51 +306,6 @@ class NewsDetail {
     );
 
     return updatedTemplate;
-  };
-}
-
-class App {
-  constructor(root) {
-    this.$root = document.getElementById(root);
-  }
-
-  #render = (view) => {
-    let template = `
-    <main class="bg-gray-100 max-w-screen-md mx-auto box-border">
-      {{__view__}}
-    </main>
-  `;
-
-    const updatedTemplate = template.replace("{{__view__}}", view);
-    scrollToTop();
-    return (this.$root.innerHTML = updatedTemplate);
-  };
-
-  #router = () => {
-    try {
-      const routePath = location.hash;
-
-      if (routePath === "") {
-        store.currentPage = 1;
-        const { newsFeed } = new NewsFeed();
-        return this.#render(newsFeed());
-      } else if (routePath.indexOf("#/page/") >= 0) {
-        store.currentPage = Number(routePath.slice(7));
-        const { newsFeed } = new NewsFeed();
-        return this.#render(newsFeed());
-      } else {
-        const { newsDetail } = new NewsDetail();
-        return this.#render(newsDetail);
-      }
-    } catch (e) {
-      return this.#render(e);
-    }
-  };
-
-  run = () => {
-    window.addEventListener("hashchange", this.#router);
-    window.addEventListener("DOMContentLoaded", this.#router);
-    document.getElementById("go-top").addEventListener("click", scrollToTop);
   };
 }
 
