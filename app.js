@@ -9,9 +9,9 @@ const store = {
 //store에 data를 추가시켜주는 함수
 function makeFeeds(obj, paging) {
   const feeds = {};
-  let j = 0;
-  for (let i = (paging - 1) * 30; i < paging * 30; i++) {
-    feeds[i] = { ...obj[j++] };
+  let i = 0;
+  for (let id = (paging - 1) * 30; id < paging * 30; id++) {
+    feeds[id] = obj[i++];
   }
   return feeds;
 }
