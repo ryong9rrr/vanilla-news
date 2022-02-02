@@ -2,8 +2,19 @@ const NEWS_URL = "https://api.hnpwa.com/v0/news/@paging.json";
 const CONTENT_URL = `https://api.hnpwa.com/v0/item/@id.json`;
 const store = {
   currentPage: 1,
+  feeds: {},
   isRead: {},
 };
+
+//store에 data를 추가시켜주는 함수
+function makeFeeds(obj, paging) {
+  const feeds = {};
+  let j = 0;
+  for (let i = (paging - 1) * 30; i < paging * 30; i++) {
+    feeds[i] = { ...obj[j++] };
+  }
+  return feeds;
+}
 
 const scrollToTop = () => window.scrollTo(0, 0);
 
@@ -39,7 +50,14 @@ function getData(url) {
 
 function newsFeed() {
   const paging = Math.floor((store.currentPage - 1) / 3) + 1;
-  const newsFeedData = getData(NEWS_URL.replace("@paging", paging));
+  let newsFeedData = store.feeds;
+  if (store.feeds.length === 0 || !store.feeds[(store.currentPage - 1) * 10]) {
+    const data = makeFeeds(
+      getData(NEWS_URL.replace("@paging", paging)),
+      paging
+    );
+    newsFeedData = store.feeds = { ...store.feeds, ...data };
+  }
 
   const makePagination = () => {
     // 1 2 3 ... 9 10 을 만들어내는 함수
@@ -100,9 +118,11 @@ function newsFeed() {
 
   const makeFeed = () => {
     const newsList = [];
-    const table = [20, 0, 10];
-    const start = table[store.currentPage % 3];
-    for (let i = start; i < start + 10; i++) {
+    for (
+      let i = (store.currentPage - 1) * 10;
+      i < store.currentPage * 10;
+      i++
+    ) {
       newsList.push(`
         <a href="#/show/${newsFeedData[i].id}">  
           <article class="${
