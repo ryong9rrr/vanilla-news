@@ -1,26 +1,26 @@
 type News = {
-  id: number;
-  user: string;
-  time_ago: string;
-  comments_count: number;
+  readonly id: number;
+  readonly user: string;
+  readonly time_ago: string;
+  readonly comments_count: number;
 };
 
 type NewsFeed = News & {
-  title: string;
-  points: number;
+  readonly title: string;
+  readonly points: number;
 };
 
 type NewsDetail = News & {
-  points: number;
-  title: string;
-  content: string;
-  comments: NewsComment[];
+  readonly points: number;
+  readonly title: string;
+  readonly content: string;
+  readonly comments: NewsComment[];
 };
 
 type NewsComment = News & {
-  level: number;
-  content: string;
-  comments: NewsComment[];
+  readonly level: number;
+  readonly content: string;
+  readonly comments: NewsComment[];
 };
 
 type NewsFeeds = {
@@ -39,7 +39,6 @@ type Store = {
 };
 
 const $container: HTMLElement | null = document.getElementById("root");
-const ajax: XMLHttpRequest = new XMLHttpRequest();
 const NEWS_URL = "https://api.hnpwa.com/v0/news/@paging.json";
 const CONTENT_URL = `https://api.hnpwa.com/v0/item/@id.json`;
 const store: Store = {
@@ -47,6 +46,54 @@ const store: Store = {
   feeds: {},
   isRead: {},
 };
+
+function applyApiMixins(targetClasses: any, baseClasses: any[]): void {
+  baseClasses.forEach((baseClass) => {
+    Object.getOwnPropertyNames(baseClass.prototype).forEach((name) => {
+      const descriptor = Object.getOwnPropertyDescriptor(
+        baseClass.prototype,
+        name
+      );
+      if (descriptor) {
+        Object.defineProperty(targetClasses.prototype, name, descriptor);
+      }
+    });
+  });
+}
+
+class Api {
+  getRequest<AjaxResponse>(url: string): AjaxResponse {
+    const ajax = new XMLHttpRequest();
+    ajax.open("GET", url, false);
+    ajax.send();
+    if (ajax.readyState !== 4 || ajax.status !== 200) {
+      throw new Error(
+        "지금 해커뉴스가 API를 제공하고 있는 서버에 문제가 생긴 것 같아요 😥"
+      );
+    }
+    return JSON.parse(ajax.response);
+  }
+}
+
+class NewsFeedApi {
+  getData(paging: number): NewsFeed[] {
+    return this.getRequest<NewsFeed[]>(
+      NEWS_URL.replace("@paging", String(paging))
+    );
+  }
+}
+
+class NewsDetailApi {
+  getData(id: number): NewsDetail {
+    return this.getRequest<NewsDetail>(CONTENT_URL.replace("@id", String(id)));
+  }
+}
+
+//mix-in
+interface NewsFeedApi extends Api {}
+interface NewsDetailApi extends Api {}
+applyApiMixins(NewsFeedApi, [Api]);
+applyApiMixins(NewsDetailApi, [Api]);
 
 //store에 data를 추가시켜주는 함수
 function setStoreFeeds(objs: NewsFeed[], paging: number): NewsFeeds {
@@ -82,17 +129,6 @@ function render(view: string): void {
     console.error("최상위 컨테이너가 없어 UI를 진행하지 못합니다.");
     return;
   }
-}
-
-function getData<AjaxResponse>(url: string): AjaxResponse {
-  ajax.open("GET", url, false);
-  ajax.send();
-  if (ajax.readyState !== 4 || ajax.status !== 200) {
-    throw new Error(
-      "지금 해커뉴스가 API를 제공하고 있는 서버에 문제가 생긴 것 같아요 😥"
-    );
-  }
-  return JSON.parse(ajax.response);
 }
 
 const pagination = (): string => {
@@ -173,10 +209,8 @@ function newsFeed(): string {
   const paging: number = Math.floor((store.currentPage - 1) / 3) + 1;
   let newsFeedData: NewsFeeds = store.feeds;
   if (store.feeds.length === 0 || !store.feeds[(store.currentPage - 1) * 10]) {
-    const data: NewsFeeds = setStoreFeeds(
-      getData<NewsFeed[]>(NEWS_URL.replace("@paging", String(paging))),
-      paging
-    );
+    const api = new NewsFeedApi();
+    const data: NewsFeeds = setStoreFeeds(api.getData(paging), paging);
     newsFeedData = store.feeds = { ...store.feeds, ...data };
   }
 
@@ -248,9 +282,8 @@ function makeComment(comments: NewsComment[], depth: number = 0): string {
 
 function newsDetail(): string {
   const id: string = location.hash.slice(7);
-  const newsContent: NewsDetail = getData<NewsDetail>(
-    CONTENT_URL.replace("@id", id)
-  );
+  const api = new NewsDetailApi();
+  const newsContent: NewsDetail = api.getData(Number(id));
   let template: string = `
     <div>
       <nav class="px-6 pt-6">
