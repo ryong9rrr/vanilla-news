@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "CommonJS",
+    "sourceMap": true,
+    "lib": ["ES6", "dom"],
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "downlevelIteration": true
+  },
+  "include": ["src/app.ts"]
+}

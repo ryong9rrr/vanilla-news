@@ -1,3 +1,4 @@
+const BASE_URL = "http://localhost:1234/";
 const NEWS_URL = (paging) => `https://api.hnpwa.com/v0/news/${paging}.json`;
 const CONTENT_URL = (id) => `https://api.hnpwa.com/v0/item/${id}.json`;
 
@@ -27,7 +28,7 @@ const clickedButton = (btnString) => {
 
 describe("뉴스 앱 테스트", () => {
   beforeEach(() => {
-    cy.visit("http://127.0.0.1:5500/index.html");
+    cy.visit(BASE_URL);
   });
 
   it("처음 시작은 첫 페이지이다.", () => {
