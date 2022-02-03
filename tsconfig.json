@@ -7,7 +7,8 @@
     "alwaysStrict": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "types": ["cypress"]
   },
   "include": ["src/app.ts"]
 }

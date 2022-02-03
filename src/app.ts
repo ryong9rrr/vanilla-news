@@ -132,63 +132,87 @@ function render(view: string): void {
 }
 
 const pagination = (): string => {
-  const CSS_pointer = (page: number): string => {
+  const template: string = `
+    <nav class="flex justify-center box-border">
+      <div class="flex">
+        <a class="{{__pagination_pointer_1__}} mr-4" href="#">first</a>
+        <a class="{{__pagination_pointer_1__}}" href="#/page/{{__prev_page__}}">prev</a>
+        <ul id="pagination-list" class="flex">
+          {{__page_list__}}
+        </ul>
+        <a class="{{__pagination_pointer_30__}}" href="#/page/{{__next_page__}}">next</a>
+        <a class="{{__pagination_pointer_30__}} ml-4" href="#/page/30">last</a>
+      </div>
+    </nav>
+  `;
+
+  const pagination_pointer = (page: number): string => {
     return store.currentPage === page
       ? "cursor-no-drop"
       : "hover:font-semibold";
   };
-  let template: string = `
-    <nav class="flex justify-center box-border">
-      <div class="flex">
-        <a class="${CSS_pointer(1)} mr-4" href="#">first</a>
-        <a class="${CSS_pointer(1)}" href="#/page/{{__prev_page__}}">prev</a>
-        <ul id="pagination-list" class="flex">
-          {{__page_list__}}
-        </ul>
-        <a class="${CSS_pointer(30)}" href="#/page/{{__next_page__}}">next</a>
-        <a class="${CSS_pointer(30)} ml-4" href="#/page/30">last</a>
-      </div>
-    </nav>
-  `;
+
   // 1 2 3 ... 9 10 을 만들어내는 함수
-  const makePages = (): string => {
+  const makeList = (): string => {
+    const template = `
+      <li {{__id_current__}} class="mx-2 hover:font-semibold">
+        <a href="#/page/{{__number__}}">
+          {{__bold_number__}}
+        </a>
+      </li>`;
+    const isCurrent = (i: number) => {
+      return i === store.currentPage ? `id="current-page"` : "";
+    };
+
+    const isBold = (i: number) => {
+      return i === store.currentPage ? `<strong>${i}</strong>` : `${i}`;
+    };
+
     const pageList: string[] = [];
     const start: number = Math.floor((store.currentPage - 1) / 10) * 10 + 1;
     for (let i = start; i < start + 10; i++) {
-      if (i === store.currentPage) {
-        pageList.push(
-          `<li id="current-page" class="mx-2 hover:font-semibold"><a href="#/page/${i}"><strong>${i}</strong></a></li>`
-        );
-      } else {
-        pageList.push(
-          `<li class="mx-2 hover:font-semibold"><a href="#/page/${i}">${i}</a></li>`
-        );
-      }
+      let updatedTemplate = template;
+      updatedTemplate = updatedTemplate.replace("{{__number__}}", String(i));
+      updatedTemplate = updatedTemplate.replace(
+        "{{__id_current__}}",
+        isCurrent(i)
+      );
+      updatedTemplate = updatedTemplate.replace(
+        "{{__bold_number__}}",
+        isBold(i)
+      );
+      pageList.push(updatedTemplate);
     }
     return pageList.join("");
   };
 
-  let paginationHtmlTemplate: string = template;
+  let updatedTemplate: string = template;
 
-  paginationHtmlTemplate = paginationHtmlTemplate.replace(
+  updatedTemplate = updatedTemplate.replace(
+    /{{__pagination_pointer_1__}}/g,
+    pagination_pointer(1)
+  );
+  updatedTemplate = updatedTemplate.replace(
+    /{{__pagination_pointer_30__}}/g,
+    pagination_pointer(30)
+  );
+
+  updatedTemplate = updatedTemplate.replace(
     "{{__prev_page__}}",
     String(store.currentPage === 1 ? 1 : store.currentPage - 1)
   );
 
-  paginationHtmlTemplate = paginationHtmlTemplate.replace(
+  updatedTemplate = updatedTemplate.replace(
     "{{__next_page__}}",
     String(store.currentPage === 30 ? 30 : store.currentPage + 1)
   );
 
-  paginationHtmlTemplate = paginationHtmlTemplate.replace(
-    "{{__page_list__}}",
-    makePages()
-  );
+  updatedTemplate = updatedTemplate.replace("{{__page_list__}}", makeList());
 
-  return paginationHtmlTemplate;
+  return updatedTemplate;
 };
 
-function newsFeed(): string {
+function newsFeed(): void {
   let template: string = `
     <div>
       <header class="bg-green-100 p-3 flex justify-between">
@@ -245,10 +269,10 @@ function newsFeed(): string {
     }
     return newsList.join("");
   };
-  let newsFeedHtml: string = template;
-  newsFeedHtml = newsFeedHtml.replace("{{__news_feed__}}", makeFeed());
-  newsFeedHtml = newsFeedHtml.replace("{{__pagination__}}", pagination());
-  return newsFeedHtml;
+  let updatedTemplate: string = template;
+  updatedTemplate = updatedTemplate.replace("{{__news_feed__}}", makeFeed());
+  updatedTemplate = updatedTemplate.replace("{{__pagination__}}", pagination());
+  return render(updatedTemplate);
 }
 
 function makeComment(comments: NewsComment[], depth: number = 0): string {
@@ -274,13 +298,13 @@ function makeComment(comments: NewsComment[], depth: number = 0): string {
       return template;
     }
   );
-  const commentsHtml: string = commentsList
+  const updatedTemplate: string = commentsList
     .join("")
     .replace(/<pre>|<\/pre>|<code>|<\/code>/g, "\n");
-  return commentsHtml;
+  return updatedTemplate;
 }
 
-function newsDetail(): string {
+function newsDetail(): void {
   const id: string = location.hash.slice(7);
   const api = new NewsDetailApi();
   const newsContent: NewsDetail = api.getData(Number(id));
@@ -288,7 +312,9 @@ function newsDetail(): string {
     <div>
       <nav class="px-6 pt-6">
         <a href=#/page/${store.currentPage}>
-          <span id="go-back" class="rounded-lg border-2 p-2 text-lg shadow-md transition-colors duration-500 hover:bg-red-100">◀ Back</span>
+          <span id="go-back" class="rounded-lg border-2 p-2 text-lg shadow-md transition-colors duration-500 hover:bg-red-100">
+            ◀ Back
+          </span>
         </a>
       </nav>
       <section class="p-6">
@@ -318,13 +344,13 @@ function newsDetail(): string {
   `;
 
   store.isRead[Number(id)] = true;
-  const newsDetailHtml: string = template.replace(
+  let updatedTemplate: string = template.replace(
     "{{__comments__}}",
     newsContent.comments.length > 0
       ? makeComment(newsContent.comments)
       : "No comments yet... Leave the first comment!"
   );
-  return newsDetailHtml;
+  return render(updatedTemplate);
 }
 
 function router(): void {
@@ -332,12 +358,12 @@ function router(): void {
     const routePath: string = location.hash;
     if (routePath === "") {
       store.currentPage = 1;
-      return render(newsFeed());
+      return newsFeed();
     } else if (routePath.indexOf("#/page/") >= 0) {
       store.currentPage = Number(routePath.slice(7));
-      return render(newsFeed());
+      return newsFeed();
     } else {
-      return render(newsDetail());
+      return newsDetail();
     }
   } catch (e: any) {
     return render(e);
