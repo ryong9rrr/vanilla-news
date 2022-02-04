@@ -1,3 +1,4 @@
+// start: ./node_modules/.bin/cypress open
 const BASE_URL = "http://localhost:1234/";
 const NEWS_URL = (paging) => `https://api.hnpwa.com/v0/news/${paging}.json`;
 const CONTENT_URL = (id) => `https://api.hnpwa.com/v0/item/${id}.json`;

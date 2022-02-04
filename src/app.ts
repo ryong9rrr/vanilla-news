@@ -1,3 +1,11 @@
+//utils
+const scrollToTop = (): Window | any => window.scrollTo(0, 0);
+
+const randomUserImg = (): string => {
+  const n: number = Math.floor(Math.random() * 10);
+  return n % 2 ? "🙋‍♂️" : "🙋";
+};
+
 type News = {
   readonly id: number;
   readonly user: string;
@@ -95,23 +103,6 @@ interface NewsDetailApi extends Api {}
 applyApiMixins(NewsFeedApi, [Api]);
 applyApiMixins(NewsDetailApi, [Api]);
 
-//store에 data를 추가시켜주는 함수
-function setStoreFeeds(objs: NewsFeed[], paging: number): NewsFeeds {
-  const feeds: NewsFeeds = {};
-  let i = 0;
-  for (let idx = (paging - 1) * 30; idx < paging * 30; idx++) {
-    feeds[idx] = objs[i++];
-  }
-  return feeds;
-}
-
-const scrollToTop = (): Window | any => window.scrollTo(0, 0);
-
-const randomUserImg = (): string => {
-  const n: number = Math.floor(Math.random() * 10);
-  return n % 2 ? "🙋‍♂️" : "🙋";
-};
-
 function render(view: string): void {
   let template: string = `
     <main class="bg-gray-100 max-w-screen-md mx-auto box-border">
@@ -131,86 +122,88 @@ function render(view: string): void {
   }
 }
 
-const pagination = (): string => {
-  const template: string = `
-    <nav class="flex justify-center box-border">
-      <div class="flex">
-        <a class="{{__pagination_pointer_1__}} mr-4" href="#">first</a>
-        <a class="{{__pagination_pointer_1__}}" href="#/page/{{__prev_page__}}">prev</a>
-        <ul id="pagination-list" class="flex">
-          {{__page_list__}}
-        </ul>
-        <a class="{{__pagination_pointer_30__}}" href="#/page/{{__next_page__}}">next</a>
-        <a class="{{__pagination_pointer_30__}} ml-4" href="#/page/30">last</a>
-      </div>
-    </nav>
-  `;
+class Component {
+  private readonly template: string;
+  protected renderTemplate: string;
 
-  const pagination_pointer = (page: number): string => {
+  constructor(template: string) {
+    this.template = template;
+    this.renderTemplate = template;
+  }
+
+  protected style_pointer(page: number): string {
     return store.currentPage === page
       ? "cursor-no-drop"
       : "hover:font-semibold";
-  };
+  }
 
-  // 1 2 3 ... 9 10 을 만들어내는 함수
-  const makeList = (): string => {
+  protected setTemplateData(key: string | RegExp, value: string): void {
+    this.renderTemplate = this.renderTemplate.replace(key, value);
+  }
+}
+
+class Pagination extends Component {
+  private pageList: string[];
+  private startPage: number;
+
+  constructor() {
     const template = `
-      <li {{__id_current__}} class="mx-2 hover:font-semibold">
-        <a href="#/page/{{__number__}}">
-          {{__bold_number__}}
-        </a>
-      </li>`;
-    const isCurrent = (i: number) => {
-      return i === store.currentPage ? `id="current-page"` : "";
-    };
+    <nav class="flex justify-center box-border">
+      <div class="flex">
+        <a class="{{__style_pointer_1__}} mr-4" href="#">first</a>
+        <a class="{{__style_pointer_1__}}" href="#/page/{{__prev_page__}}">prev</a>
+        <ul id="pagination-list" class="flex">
+          {{__page_list__}}
+        </ul>
+        <a class="{{__style_pointer_30__}}" href="#/page/{{__next_page__}}">next</a>
+        <a class="{{__style_pointer_30__}} ml-4" href="#/page/30">last</a>
+      </div>
+    </nav>`;
+    super(template);
+    this.pageList = [];
+    this.startPage = Math.floor((store.currentPage - 1) / 10) * 10 + 1;
+  }
 
-    const isBold = (i: number) => {
-      return i === store.currentPage ? `<strong>${i}</strong>` : `${i}`;
-    };
-
-    const pageList: string[] = [];
-    const start: number = Math.floor((store.currentPage - 1) / 10) * 10 + 1;
-    for (let i = start; i < start + 10; i++) {
-      let updatedTemplate = template;
-      updatedTemplate = updatedTemplate.replace("{{__number__}}", String(i));
-      updatedTemplate = updatedTemplate.replace(
-        "{{__id_current__}}",
-        isCurrent(i)
-      );
-      updatedTemplate = updatedTemplate.replace(
-        "{{__bold_number__}}",
-        isBold(i)
-      );
-      pageList.push(updatedTemplate);
+  private makeList(): string {
+    for (let i = this.startPage; i < this.startPage + 10; i++) {
+      if (i === store.currentPage) {
+        this.pageList.push(
+          `<li id="current-page" class="mx-2 hover:font-semibold"><a href="#/page/${i}"><strong>${i}</strong></a></li>`
+        );
+      } else {
+        this.pageList.push(
+          `<li class="mx-2 hover:font-semibold"><a href="#/page/${i}">${i}</a></li>`
+        );
+      }
     }
-    return pageList.join("");
-  };
+    return this.pageList.join("");
+  }
 
-  let updatedTemplate: string = template;
+  makePagination() {
+    this.setTemplateData(/{{__style_pointer_1__}}/g, this.style_pointer(1));
+    this.setTemplateData(/{{__style_pointer_30__}}/g, this.style_pointer(30));
+    this.setTemplateData(
+      "{{__prev_page__}}",
+      String(store.currentPage === 1 ? 1 : store.currentPage - 1)
+    );
+    this.setTemplateData(
+      "{{__next_page__}}",
+      String(store.currentPage === 30 ? 30 : store.currentPage + 1)
+    );
+    this.setTemplateData("{{__page_list__}}", this.makeList());
 
-  updatedTemplate = updatedTemplate.replace(
-    /{{__pagination_pointer_1__}}/g,
-    pagination_pointer(1)
-  );
-  updatedTemplate = updatedTemplate.replace(
-    /{{__pagination_pointer_30__}}/g,
-    pagination_pointer(30)
-  );
+    return this.renderTemplate;
+  }
+}
 
-  updatedTemplate = updatedTemplate.replace(
-    "{{__prev_page__}}",
-    String(store.currentPage === 1 ? 1 : store.currentPage - 1)
-  );
-
-  updatedTemplate = updatedTemplate.replace(
-    "{{__next_page__}}",
-    String(store.currentPage === 30 ? 30 : store.currentPage + 1)
-  );
-
-  updatedTemplate = updatedTemplate.replace("{{__page_list__}}", makeList());
-
-  return updatedTemplate;
-};
+function makeFeeds(newsFeed: NewsFeed[], paging: number): NewsFeeds {
+  const feeds: NewsFeeds = {};
+  let i = 0;
+  for (let idx = (paging - 1) * 30; idx < paging * 30; idx++) {
+    feeds[idx] = newsFeed[i++];
+  }
+  return feeds;
+}
 
 function newsFeed(): void {
   let template: string = `
@@ -234,7 +227,7 @@ function newsFeed(): void {
   let newsFeedData: NewsFeeds = store.feeds;
   if (store.feeds.length === 0 || !store.feeds[(store.currentPage - 1) * 10]) {
     const api = new NewsFeedApi();
-    const data: NewsFeeds = setStoreFeeds(api.getData(paging), paging);
+    const data: NewsFeeds = makeFeeds(api.getData(paging), paging);
     newsFeedData = store.feeds = { ...store.feeds, ...data };
   }
 
@@ -270,8 +263,12 @@ function newsFeed(): void {
     return newsList.join("");
   };
   let updatedTemplate: string = template;
+  const pagination = new Pagination();
   updatedTemplate = updatedTemplate.replace("{{__news_feed__}}", makeFeed());
-  updatedTemplate = updatedTemplate.replace("{{__pagination__}}", pagination());
+  updatedTemplate = updatedTemplate.replace(
+    "{{__pagination__}}",
+    pagination.makePagination() // this바인딩이 안되서 구조분해할당으로 못부름
+  );
   return render(updatedTemplate);
 }
 
