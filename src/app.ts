@@ -46,7 +46,6 @@ type Store = {
   isRead: IsRead;
 };
 
-const $container: HTMLElement | null = document.getElementById("root");
 const NEWS_URL = "https://api.hnpwa.com/v0/news/@paging.json";
 const CONTENT_URL = `https://api.hnpwa.com/v0/item/@id.json`;
 const store: Store = {
@@ -103,32 +102,29 @@ interface NewsDetailApi extends Api {}
 applyApiMixins(NewsFeedApi, [Api]);
 applyApiMixins(NewsDetailApi, [Api]);
 
-function render(view: string): void {
-  let template: string = `
-    <main class="bg-gray-100 max-w-screen-md mx-auto box-border">
-      {{__view__}}
-    </main>
-  `;
-
-  const updatedTemplate: string = template.replace("{{__view__}}", view);
-  scrollToTop();
-
-  if ($container) {
-    $container.innerHTML = updatedTemplate;
-    return;
-  } else {
-    console.error("최상위 컨테이너가 없어 UI를 진행하지 못합니다.");
-    return;
-  }
-}
-
-class Component {
-  private readonly template: string;
+abstract class Component {
   protected renderTemplate: string;
+  protected htmlList: string[];
 
   constructor(template: string) {
-    this.template = template;
     this.renderTemplate = template;
+    this.htmlList = [];
+  }
+
+  protected clearHtmlList(): void {
+    this.htmlList = [];
+    return;
+  }
+
+  protected addHtml(htmlString: string): void {
+    this.htmlList.push(htmlString);
+    return;
+  }
+
+  protected getHtml(): string {
+    const snapshot = this.htmlList.join("");
+    this.clearHtmlList();
+    return snapshot;
   }
 
   protected style_pointer(page: number): string {
@@ -137,14 +133,20 @@ class Component {
       : "hover:font-semibold";
   }
 
-  protected setTemplateData(key: string | RegExp, value: string): void {
-    this.renderTemplate = this.renderTemplate.replace(key, value);
+  protected setTemplateData(
+    key: string | RegExp,
+    value: string,
+    prev: string = this.renderTemplate
+  ): void {
+    this.renderTemplate = prev.replace(key, value);
+    return;
   }
+
+  abstract component(): string;
 }
 
 class Pagination extends Component {
-  private pageList: string[];
-  private startPage: number;
+  private readonly startPage: number;
 
   constructor() {
     const template = `
@@ -160,26 +162,21 @@ class Pagination extends Component {
       </div>
     </nav>`;
     super(template);
-    this.pageList = [];
     this.startPage = Math.floor((store.currentPage - 1) / 10) * 10 + 1;
   }
 
-  private makeList(): string {
+  private makeComponent(): string {
     for (let i = this.startPage; i < this.startPage + 10; i++) {
-      if (i === store.currentPage) {
-        this.pageList.push(
-          `<li id="current-page" class="mx-2 hover:font-semibold"><a href="#/page/${i}"><strong>${i}</strong></a></li>`
-        );
-      } else {
-        this.pageList.push(
-          `<li class="mx-2 hover:font-semibold"><a href="#/page/${i}">${i}</a></li>`
-        );
-      }
+      const s_li = `<li id="current-page" class="mx-2 hover:font-semibold"><a href="#/page/${i}"><strong>${i}</strong></a></li>`;
+      const li = `<li class="mx-2 hover:font-semibold"><a href="#/page/${i}">${i}</a></li>`;
+
+      i === store.currentPage ? this.addHtml(s_li) : this.addHtml(li);
     }
-    return this.pageList.join("");
+
+    return this.getHtml();
   }
 
-  makePagination() {
+  component(): string {
     this.setTemplateData(/{{__style_pointer_1__}}/g, this.style_pointer(1));
     this.setTemplateData(/{{__style_pointer_30__}}/g, this.style_pointer(30));
     this.setTemplateData(
@@ -190,95 +187,221 @@ class Pagination extends Component {
       "{{__next_page__}}",
       String(store.currentPage === 30 ? 30 : store.currentPage + 1)
     );
-    this.setTemplateData("{{__page_list__}}", this.makeList());
+    this.setTemplateData("{{__page_list__}}", this.makeComponent());
 
     return this.renderTemplate;
   }
 }
 
-function makeFeeds(newsFeed: NewsFeed[], paging: number): NewsFeeds {
-  const feeds: NewsFeeds = {};
-  let i = 0;
-  for (let idx = (paging - 1) * 30; idx < paging * 30; idx++) {
-    feeds[idx] = newsFeed[i++];
+abstract class View {
+  private readonly $container: HTMLElement;
+  private readonly mainTemplate: string;
+  private readonly template: string;
+  private renderTemplate: string;
+  private htmlList: string[];
+
+  constructor(containerId: string, template: string) {
+    const mainTemplate = `
+      <main class="bg-gray-100 max-w-screen-md mx-auto box-border">
+        {{__view__}}
+      </main>
+    `;
+
+    const containerElement = document.getElementById(containerId);
+    if (!containerElement) {
+      throw "최상위 컨테이너가 없어 UI를 진행하지 못합니다.";
+    }
+
+    this.$container = containerElement;
+    this.mainTemplate = mainTemplate;
+    this.template = template;
+    this.renderTemplate = template;
+    this.htmlList = [];
   }
-  return feeds;
+
+  protected clearHtmlList(): void {
+    this.htmlList = [];
+    return;
+  }
+
+  protected addHtml(htmlString: string): void {
+    this.htmlList.push(htmlString);
+    return;
+  }
+
+  protected getHtml(): string {
+    const snapshot = this.htmlList.join("");
+    this.clearHtmlList();
+    return snapshot;
+  }
+
+  protected setTemplateData(
+    key: string | RegExp,
+    value: string,
+    prev: string = this.renderTemplate
+  ): void {
+    this.renderTemplate = prev.replace(key, value);
+    return;
+  }
+
+  protected scrollToTop(): Window | any {
+    return window.scrollTo(0, 0);
+  }
+
+  protected randomUserImg(): string {
+    const n: number = Math.floor(Math.random() * 10);
+    return n % 2 ? "🙋‍♂️" : "🙋";
+  }
+
+  protected updateView(): void {
+    this.scrollToTop();
+    this.setTemplateData(
+      "{{__view__}}",
+      this.renderTemplate,
+      this.mainTemplate
+    );
+    this.$container.innerHTML = this.renderTemplate;
+    this.renderTemplate = this.template;
+    return;
+  }
+  // render 함수 안에 updateView 구현할 것
+  abstract render(): void;
 }
 
-function newsFeed(): void {
-  let template: string = `
-    <div>
-      <header class="bg-green-100 p-3 flex justify-between">
-        <h1 class="text-4xl p-3">📰 Vanilla News</h1>
-        <div>&copy;Hacker news API</div>
-      </header>
-      <div class="bg-pink-100 p-3">
-        {{__pagination__}}
+class NewsFeedView extends View {
+  private readonly paging: number;
+  private isRead: IsRead;
+  private api: NewsFeedApi;
+  private feeds: NewsFeeds;
+  private pagination: Pagination;
+
+  constructor(containerId: string) {
+    const template = `
+      <div>
+        <header class="bg-green-100 p-3 flex justify-between">
+          <h1 class="text-4xl p-3">📰 Vanilla News</h1>
+          <div>&copy;Hacker news API</div>
+        </header>
+        <div class="bg-pink-100 p-3">
+          {{__pagination__}}
+        </div>
+        <section class="bg-blue-200 p-3">
+          {{__news_feed__}}        
+        </section>
+        <footer class="text-center p-5">
+          &copy; ryong9rrr, 용상윤
+        </footer>
       </div>
-      <section class="bg-blue-200 p-3">
-        {{__news_feed__}}        
-      </section>
-      <footer class="text-center p-5">
-        &copy; ryong9rrr, 용상윤
-      </footer>
-    </div>
-  `;
-  const paging: number = Math.floor((store.currentPage - 1) / 3) + 1;
-  let newsFeedData: NewsFeeds = store.feeds;
-  if (store.feeds.length === 0 || !store.feeds[(store.currentPage - 1) * 10]) {
-    const api = new NewsFeedApi();
-    const data: NewsFeeds = makeFeeds(api.getData(paging), paging);
-    newsFeedData = store.feeds = { ...store.feeds, ...data };
+    `;
+
+    super(containerId, template);
+
+    this.paging = Math.floor((store.currentPage - 1) / 3) + 1;
+    this.api = new NewsFeedApi();
+    this.isRead = store.isRead;
+    this.feeds = store.feeds;
+    if (this.feeds.length === 0 || !this.feeds[(store.currentPage - 1) * 10]) {
+      const addedFeeds: NewsFeeds = this.addFeeds(
+        this.api.getData(this.paging),
+        this.paging
+      );
+      this.feeds = store.feeds = { ...store.feeds, ...addedFeeds };
+    }
+    this.pagination = new Pagination();
   }
 
-  const makeFeed = (): string => {
-    const newsList: string[] = [];
+  private addFeeds(newsFeed: NewsFeed[], paging: number): NewsFeeds {
+    const feeds: NewsFeeds = {};
+    let i = 0;
+    for (let idx = (paging - 1) * 30; idx < paging * 30; idx++) {
+      feeds[idx] = newsFeed[i++];
+    }
+    return feeds;
+  }
+
+  private makeFeed(): string {
     for (
       let i = (store.currentPage - 1) * 10;
       i < store.currentPage * 10;
       i++
     ) {
-      const newsFeed: NewsFeed = newsFeedData[i];
-      newsList.push(`
-        <a href="#/show/${newsFeed.id}">  
+      const { id, title, user, time_ago, points, comments_count } =
+        this.feeds[i];
+      this.addHtml(`
+        <a href="#/show/${id}">  
           <article class="${
-            store.isRead[newsFeed.id]
+            this.isRead[id]
               ? "bg-gray-400"
               : "bg-gray-100 transition-colors duration-500 hover:bg-green-100"
           } mb-3 flex p-4 rounded-lg shadow-md">
               <div class="w-10/12">
-              <h2 class="font-mono mb-2 text-2xl">${newsFeed.title}</h2>
-              <h3 class="mb-1">👋 ${newsFeed.user}</h3>
-              <h3 class="text-sm">🕗 ${newsFeed.time_ago}</h3>
+              <h2 class="font-mono mb-2 text-2xl">${title}</h2>
+              <h3 class="mb-1">👋 ${user}</h3>
+              <h3 class="text-sm">🕗 ${time_ago}</h3>
               </div>
               <div class="flex justify-center items-center w-2/12">
                 <div>
-                  <h3 class="text-left mb-3">❤ ${newsFeed.points}</h3>
-                  <h3 class="text-left">🗨 ${newsFeed.comments_count}</h3>
+                  <h3 class="text-left mb-3">❤ ${points}</h3>
+                  <h3 class="text-left">🗨 ${comments_count}</h3>
                 </div>
               </div>
           </article>
         </a>`);
     }
-    return newsList.join("");
-  };
-  let updatedTemplate: string = template;
-  const pagination = new Pagination();
-  updatedTemplate = updatedTemplate.replace("{{__news_feed__}}", makeFeed());
-  updatedTemplate = updatedTemplate.replace(
-    "{{__pagination__}}",
-    pagination.makePagination() // this바인딩이 안되서 구조분해할당으로 못부름
-  );
-  return render(updatedTemplate);
+    return this.getHtml();
+  }
+
+  render(): void {
+    this.setTemplateData("{{__news_feed__}}", this.makeFeed());
+    this.setTemplateData("{{__pagination__}}", this.pagination.component());
+    this.updateView();
+    return;
+  }
 }
 
-function makeComment(comments: NewsComment[], depth: number = 0): string {
-  const commentsList: string[] = comments.map(
-    (comment: NewsComment): string => {
-      const template: string = `
+class NewsDetailView extends View {
+  private api: NewsDetailApi;
+  constructor(containerId: string) {
+    const template: string = `
+      <div>
+        <nav class="px-6 pt-6">
+          <a href=#/page/{{__current_page__}}>
+            <span id="go-back" class="rounded-lg border-2 p-2 text-lg shadow-md transition-colors duration-500 hover:bg-red-100">
+              ◀ Back
+            </span>
+          </a>
+        </nav>
+        <section class="p-6">
+          <h1 class="text-4xl mb-3">{{__title__}}</h1>
+          <h3 class="mb-1 text-right">👋 {{__user__}}</h3>
+          <h3 class="mb-1 text-right">❤ {{__points__}}</h3>
+          <h3 class="mb-1 text-right">🕥 {{__time_age__}}</h3>
+          <div class="mb-6">
+            <h2 class="text-3xl mb-6">Content</h2>
+              {{__content__}}
+          </div>
+          <div>
+            <div class="mb-6 pb-3 border-b-2 border-slate-600 flex justify-between">
+              <strong>Comments</strong>
+              <span class="text-right">🗨 {{__comments_count__}}</span>
+            </div>
+            <div>
+              {{__comments__}}
+            </div>
+          </div>
+        </section>
+      </div>
+    `;
+    super(containerId, template);
+    this.api = new NewsDetailApi();
+  }
+
+  private makeComment(comments: NewsComment[], depth: number = 0): string {
+    for (const comment of comments) {
+      this.addHtml(`
       <div style="padding-left:${depth * 10}px" class="text-sm">
         <div class="flex justify-between items-center text-base p-1 bg-green-100">
-          <h3>${comment.level > 0 ? "▶" : ""} ${randomUserImg()}
+          <h3>${comment.level > 0 ? "▶" : ""} ${this.randomUserImg()}
             <strong>${comment.user}</strong>
             <span class="text-sm text-gray-600">${comment.time_ago}</span>
           </h3>
@@ -288,97 +411,65 @@ function makeComment(comments: NewsComment[], depth: number = 0): string {
           ${comment.content}
         </div>
         <div class="w-full box-border">
-          ${makeComment(comment.comments, depth + 1)}
+          ${this.makeComment(comment.comments, depth + 1)}
         </div>
       </div>
-    `;
-      return template;
+      `);
     }
-  );
-  const updatedTemplate: string = commentsList
-    .join("")
-    .replace(/<pre>|<\/pre>|<code>|<\/code>/g, "\n");
-  return updatedTemplate;
-}
+    return this.getHtml().replace(/<pre>|<\/pre>|<code>|<\/code>/g, "\n");
+  }
 
-function newsDetail(): void {
-  const id: string = location.hash.slice(7);
-  const api = new NewsDetailApi();
-  const newsContent: NewsDetail = api.getData(Number(id));
-  let template: string = `
-    <div>
-      <nav class="px-6 pt-6">
-        <a href=#/page/${store.currentPage}>
-          <span id="go-back" class="rounded-lg border-2 p-2 text-lg shadow-md transition-colors duration-500 hover:bg-red-100">
-            ◀ Back
-          </span>
-        </a>
-      </nav>
-      <section class="p-6">
-        <h1 class="text-4xl mb-3">${newsContent.title}</h1>
-        <h3 class="mb-1 text-right">👋 ${newsContent.user}</h3>
-        <h3 class="mb-1 text-right">❤ ${newsContent.points}</h3>
-        <h3 class="mb-1 text-right">🕥 ${newsContent.time_ago}</h3>
-        <div class="mb-6">
-          <h2 class="text-3xl mb-6">Content</h2>
-          ${
-            newsContent.content.length === 0
-              ? "🙊 oh, content is empty..."
-              : newsContent.content
-          }
-        </div>
-        <div>
-          <div class="mb-6 pb-3 border-b-2 border-slate-600 flex justify-between">
-            <strong>Comments</strong>
-            <span class="text-right">🗨 ${newsContent.comments_count}</span>
-          </div>
-          <div>
-            {{__comments__}}
-          </div>
-        </div>
-      </section>
-    </div>
-  `;
+  render(): void {
+    const id: string = location.hash.slice(7);
+    const newsContent: NewsDetail = this.api.getData(Number(id));
+    store.isRead[Number(id)] = true;
+    this.setTemplateData(
+      "{{__comments__}}",
+      newsContent.comments.length > 0
+        ? this.makeComment(newsContent.comments)
+        : "No comments yet... Leave the first comment!"
+    );
+    this.setTemplateData("{{__current_page__}}", String(store.currentPage));
+    this.setTemplateData("{{__title__}}", newsContent.title);
+    this.setTemplateData("{{__user__}}", newsContent.user);
+    this.setTemplateData("{{__points__}}", String(newsContent.points));
+    this.setTemplateData("{{__time_age__}}", newsContent.time_ago);
+    this.setTemplateData(
+      "{{__content__}}",
+      newsContent.content.length === 0
+        ? "🙊 oh, content is empty..."
+        : newsContent.content
+    );
+    this.setTemplateData(
+      "{{__comments_count__}}",
+      String(newsContent.comments_count)
+    );
 
-  store.isRead[Number(id)] = true;
-  let updatedTemplate: string = template.replace(
-    "{{__comments__}}",
-    newsContent.comments.length > 0
-      ? makeComment(newsContent.comments)
-      : "No comments yet... Leave the first comment!"
-  );
-  return render(updatedTemplate);
+    this.updateView();
+    return;
+  }
 }
 
 function router(): void {
   try {
     const routePath: string = location.hash;
     if (routePath === "") {
+      const view = new NewsFeedView("root");
       store.currentPage = 1;
-      return newsFeed();
+      view.render();
+      return;
     } else if (routePath.indexOf("#/page/") >= 0) {
       store.currentPage = Number(routePath.slice(7));
-      return newsFeed();
+      const view = new NewsFeedView("root");
+      return view.render();
     } else {
-      return newsDetail();
+      const view = new NewsDetailView("root");
+      return view.render();
     }
   } catch (e: any) {
-    return render(e);
+    throw e;
   }
 }
-
-class App {
-  goTopButton: HTMLElement | null;
-
-  constructor() {
-    this.goTopButton = document.getElementById("go-top");
-  }
-  run = (): void => {
-    window.addEventListener("hashchange", router);
-    window.addEventListener("DOMContentLoaded", router);
-    this.goTopButton?.addEventListener("click", scrollToTop);
-  };
-}
-
-const app = new App();
-app.run();
+window.addEventListener("hashchange", router);
+window.addEventListener("DOMContentLoaded", router);
+document.getElementById("go-top")?.addEventListener("click", scrollToTop);
