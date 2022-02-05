@@ -1,0 +1,52 @@
+import Component from "../core/component";
+
+const template = `
+      <nav class="flex justify-center box-border">
+        <div class="flex">
+          <a class="{{__style_pointer_1__}} mr-4" href="#">first</a>
+          <a class="{{__style_pointer_1__}}" href="#/page/{{__prev_page__}}">prev</a>
+          <ul id="pagination-list" class="flex">
+            {{__page_list__}}
+          </ul>
+          <a class="{{__style_pointer_30__}}" href="#/page/{{__next_page__}}">next</a>
+          <a class="{{__style_pointer_30__}} ml-4" href="#/page/30">last</a>
+        </div>
+      </nav>`;
+
+export default class Pagination extends Component {
+  private readonly startPage: number;
+
+  constructor() {
+    super(template);
+    this.startPage = Math.floor((window.store.currentPage - 1) / 10) * 10 + 1;
+  }
+
+  private makeComponent(): string {
+    for (let i = this.startPage; i < this.startPage + 10; i++) {
+      const s_li = `<li id="current-page" class="mx-2 hover:font-semibold"><a href="#/page/${i}"><strong>${i}</strong></a></li>`;
+      const li = `<li class="mx-2 hover:font-semibold"><a href="#/page/${i}">${i}</a></li>`;
+
+      i === window.store.currentPage ? this.addHtml(s_li) : this.addHtml(li);
+    }
+
+    return this.getHtml();
+  }
+
+  component(): string {
+    this.setTemplateData(/{{__style_pointer_1__}}/g, this.style_pointer(1));
+    this.setTemplateData(/{{__style_pointer_30__}}/g, this.style_pointer(30));
+    this.setTemplateData(
+      "{{__prev_page__}}",
+      String(window.store.currentPage === 1 ? 1 : window.store.currentPage - 1)
+    );
+    this.setTemplateData(
+      "{{__next_page__}}",
+      String(
+        window.store.currentPage === 30 ? 30 : window.store.currentPage + 1
+      )
+    );
+    this.setTemplateData("{{__page_list__}}", this.makeComponent());
+
+    return this.renderTemplate;
+  }
+}
