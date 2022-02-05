@@ -46,6 +46,11 @@ type Store = {
   isRead: IsRead;
 };
 
+type RouteInfo = {
+  path: string;
+  page: View;
+};
+
 const NEWS_URL = "https://api.hnpwa.com/v0/news/@paging.json";
 const CONTENT_URL = `https://api.hnpwa.com/v0/item/@id.json`;
 const store: Store = {
@@ -269,11 +274,9 @@ abstract class View {
 }
 
 class NewsFeedView extends View {
-  private readonly paging: number;
   private isRead: IsRead;
   private api: NewsFeedApi;
   private feeds: NewsFeeds;
-  private pagination: Pagination;
 
   constructor(containerId: string) {
     const template = `
@@ -293,33 +296,31 @@ class NewsFeedView extends View {
         </footer>
       </div>
     `;
-
     super(containerId, template);
-
-    this.paging = Math.floor((store.currentPage - 1) / 3) + 1;
     this.api = new NewsFeedApi();
     this.isRead = store.isRead;
     this.feeds = store.feeds;
-    if (this.feeds.length === 0 || !this.feeds[(store.currentPage - 1) * 10]) {
-      const addedFeeds: NewsFeeds = this.addFeeds(
-        this.api.getData(this.paging),
-        this.paging
-      );
-      this.feeds = store.feeds = { ...store.feeds, ...addedFeeds };
+    if (this.feeds.length === 0) {
+      this.getFeeds();
     }
-    this.pagination = new Pagination();
   }
 
-  private addFeeds(newsFeed: NewsFeed[], paging: number): NewsFeeds {
+  private getFeeds(): void {
+    const paging: number = Math.floor((store.currentPage - 1) / 3) + 1;
+    const newData: NewsFeed[] = this.api.getData(paging);
     const feeds: NewsFeeds = {};
     let i = 0;
     for (let idx = (paging - 1) * 30; idx < paging * 30; idx++) {
-      feeds[idx] = newsFeed[i++];
+      feeds[idx] = newData[i++];
     }
-    return feeds;
+    this.feeds = store.feeds = { ...store.feeds, ...feeds };
   }
 
   private makeFeed(): string {
+    if (!this.feeds[(store.currentPage - 1) * 10]) {
+      this.getFeeds();
+    }
+
     for (
       let i = (store.currentPage - 1) * 10;
       i < store.currentPage * 10;
@@ -352,8 +353,10 @@ class NewsFeedView extends View {
   }
 
   render(): void {
+    store.currentPage = Number(location.hash.slice(7)) || 1;
+    const pagination = new Pagination();
     this.setTemplateData("{{__news_feed__}}", this.makeFeed());
-    this.setTemplateData("{{__pagination__}}", this.pagination.component());
+    this.setTemplateData("{{__pagination__}}", pagination.component());
     this.updateView();
     return;
   }
@@ -450,26 +453,49 @@ class NewsDetailView extends View {
   }
 }
 
-function router(): void {
-  try {
+class Router {
+  private routeTable: RouteInfo[];
+  private defaultRoute: RouteInfo | null;
+
+  constructor() {
+    window.addEventListener("hashchange", this.route.bind(this));
+
+    this.routeTable = [];
+    this.defaultRoute = null;
+  }
+
+  setDefaultPage(page: View) {
+    this.defaultRoute = { path: "", page };
+  }
+
+  addRoutePath(path: string, page: View): void {
+    this.routeTable.push({ path, page });
+  }
+
+  route() {
     const routePath: string = location.hash;
-    if (routePath === "") {
-      const view = new NewsFeedView("root");
-      store.currentPage = 1;
-      view.render();
-      return;
-    } else if (routePath.indexOf("#/page/") >= 0) {
-      store.currentPage = Number(routePath.slice(7));
-      const view = new NewsFeedView("root");
-      return view.render();
-    } else {
-      const view = new NewsDetailView("root");
-      return view.render();
+
+    if (routePath === "" && this.defaultRoute) {
+      return this.defaultRoute.page.render();
     }
-  } catch (e: any) {
-    throw e;
+
+    for (const routeInfo of this.routeTable) {
+      if (routePath.indexOf(routeInfo.path) >= 0) {
+        routeInfo.page.render();
+        break;
+      }
+    }
   }
 }
-window.addEventListener("hashchange", router);
-window.addEventListener("DOMContentLoaded", router);
+
+//window.addEventListener("DOMContentLoaded", router);
 document.getElementById("go-top")?.addEventListener("click", scrollToTop);
+
+const router: Router = new Router();
+const newsFeedView: NewsFeedView = new NewsFeedView("root");
+const newsDetailView: NewsDetailView = new NewsDetailView("root");
+
+router.setDefaultPage(newsFeedView);
+router.addRoutePath("/page/", newsFeedView);
+router.addRoutePath("/show/", newsDetailView);
+router.route();
