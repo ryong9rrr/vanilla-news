@@ -39,7 +39,8 @@ export default class Pagination extends Component {
     return this.getHtml();
   }
 
-  component(): string {
+  // 화살표 함수는 this를 렉시컬 컨텍스트 환경에서 바인딩한다.
+  component = (): string => {
     this.setTemplateData(/{{__style_pointer_1__}}/g, this.style_pointer(1));
     this.setTemplateData(/{{__style_pointer_30__}}/g, this.style_pointer(30));
     this.setTemplateData("{{__prev_page__}}", String(this.store.prevPage));
@@ -47,5 +48,5 @@ export default class Pagination extends Component {
     this.setTemplateData("{{__page_list__}}", this.makeComponent());
 
     return this.renderTemplate;
-  }
+  };
 }
