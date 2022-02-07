@@ -94,7 +94,7 @@ export default class NewsFeedView extends View {
     return this.renderView();
   }
 
-  renderView = () => {
+  private renderView = () => {
     const pagination: Pagination = new Pagination(this.store);
     this.setTemplateData("{{__news_feed__}}", this.makeFeed());
     this.setTemplateData("{{__pagination__}}", pagination.component());
