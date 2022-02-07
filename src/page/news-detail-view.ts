@@ -1,6 +1,6 @@
 import { NewsDetailApi } from "../core/api";
 import View from "../core/view";
-import { NewsComment, NewsDetail } from "../types";
+import { NewsComment, NewsDetail, NewsStore } from "../types";
 import { randomUserImg } from "../utils";
 
 const template: string = `
@@ -36,9 +36,12 @@ const template: string = `
 
 export default class NewsDetailView extends View {
   private api: NewsDetailApi;
-  constructor(containerId: string) {
+  private store: NewsStore;
+
+  constructor(containerId: string, store: NewsStore) {
     super(containerId, template);
     this.api = new NewsDetailApi();
+    this.store = store;
   }
 
   private makeComment(comments: NewsComment[], depth: number = 0): string {
@@ -67,7 +70,7 @@ export default class NewsDetailView extends View {
   render(): void {
     const id: string = location.hash.slice(7);
     const newsContent: NewsDetail = this.api.getData(Number(id));
-    window.store.isRead[Number(id)] = true;
+    this.store.setIsRead(Number(id));
     this.setTemplateData(
       "{{__comments__}}",
       newsContent.comments.length > 0
@@ -76,7 +79,7 @@ export default class NewsDetailView extends View {
     );
     this.setTemplateData(
       "{{__current_page__}}",
-      String(window.store.currentPage)
+      String(this.store.currentPage)
     );
     this.setTemplateData("{{__title__}}", newsContent.title);
     this.setTemplateData("{{__user__}}", newsContent.user);

@@ -1,7 +1,7 @@
 import Pagination from "../components/pagination";
 import { NewsFeedApi } from "../core/api";
 import View from "../core/view";
-import { IsRead, NewsFeed, NewsFeeds } from "../types";
+import { IsRead, NewsFeed, NewsFeeds, NewsStore } from "../types";
 
 const template = `
         <div>
@@ -25,36 +25,38 @@ export default class NewsFeedView extends View {
   private isRead: IsRead;
   private api: NewsFeedApi;
   private feeds: NewsFeeds;
+  private store: NewsStore;
 
-  constructor(containerId: string) {
+  constructor(containerId: string, store: NewsStore) {
     super(containerId, template);
+    this.store = store;
     this.api = new NewsFeedApi();
-    this.isRead = window.store.isRead;
-    this.feeds = window.store.feeds;
+    this.feeds = store.feeds;
+    this.isRead = store.isRead;
     if (this.feeds.length === 0) {
       this.getFeeds();
     }
   }
 
   private getFeeds(): void {
-    const paging: number = Math.floor((window.store.currentPage - 1) / 3) + 1;
+    const paging: number = Math.floor((this.store.currentPage - 1) / 3) + 1;
     const newData: NewsFeed[] = this.api.getData(paging);
     const feeds: NewsFeeds = {};
     let i = 0;
     for (let idx = (paging - 1) * 30; idx < paging * 30; idx++) {
       feeds[idx] = newData[i++];
     }
-    this.feeds = window.store.feeds = { ...window.store.feeds, ...feeds };
+    this.feeds = this.store.setFeeds(feeds);
   }
 
   private makeFeed(): string {
-    if (!this.feeds[(window.store.currentPage - 1) * 10]) {
+    if (!this.feeds[(this.store.currentPage - 1) * 10]) {
       this.getFeeds();
     }
 
     for (
-      let i = (window.store.currentPage - 1) * 10;
-      i < window.store.currentPage * 10;
+      let i = (this.store.currentPage - 1) * 10;
+      i < this.store.currentPage * 10;
       i++
     ) {
       const { id, title, user, time_ago, points, comments_count } =
@@ -83,9 +85,10 @@ export default class NewsFeedView extends View {
     return this.getHtml();
   }
 
+  // error 날듯
   render(): void {
-    window.store.currentPage = Number(location.hash.slice(7)) || 1;
-    const pagination: Pagination = new Pagination();
+    this.store.currentPage = Number(location.hash.slice(7)) || 1;
+    const pagination: Pagination = new Pagination(this.store);
     this.setTemplateData("{{__news_feed__}}", this.makeFeed());
     this.setTemplateData("{{__pagination__}}", pagination.component());
     this.updateView();

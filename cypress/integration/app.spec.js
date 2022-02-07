@@ -147,6 +147,36 @@ describe("뉴스 앱 테스트", () => {
           checkHash(`#/show/${id}`);
         });
     });
+
+    it("첫 페이지에서 마지막 페이지로 가서 hash, 데이터 확인", () => {
+      clickedButton("last");
+      checkHash("#/page/30");
+      cy.get("article").last().click();
+      cy.request(NEWS_URL(10))
+        .then((response) => {
+          const data = Cypress._.chain(response.body).last().value();
+          return data;
+        })
+        .then((data) => {
+          const id = data.id;
+          checkHash(`#/show/${id}`);
+        });
+    });
+
+    it("마지막 페이지에서 첫 페이지로 가서 hash, 데이터 확인", () => {
+      clickedButton("last");
+      clickedButton("first");
+      cy.get("article").first().click();
+      cy.request(NEWS_URL(1))
+        .then((response) => {
+          const data = Cypress._.chain(response.body).first().value();
+          return data;
+        })
+        .then((data) => {
+          const id = data.id;
+          checkHash(`#/show/${id}`);
+        });
+    });
   });
 
   context("UI와 상태관리 test", () => {

@@ -1,10 +1,14 @@
+import { NewsStore } from "../types";
+
 export default abstract class Component {
   protected renderTemplate: string;
   protected htmlList: string[];
+  protected store: NewsStore;
 
-  constructor(template: string) {
+  constructor(template: string, store: NewsStore) {
     this.renderTemplate = template;
     this.htmlList = [];
+    this.store = store;
   }
 
   protected clearHtmlList(): void {
@@ -21,12 +25,6 @@ export default abstract class Component {
     const snapshot = this.htmlList.join("");
     this.clearHtmlList();
     return snapshot;
-  }
-
-  protected style_pointer(page: number): string {
-    return window.store.currentPage === page
-      ? "cursor-no-drop"
-      : "hover:font-semibold";
   }
 
   protected setTemplateData(

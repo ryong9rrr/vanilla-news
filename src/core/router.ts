@@ -6,7 +6,7 @@ export default class Router {
   private defaultRoute: RouteInfo | null;
 
   constructor() {
-    window.addEventListener("hashchange", this.route.bind(this));
+    window.addEventListener("hashchange", this.go.bind(this));
 
     this.routeTable = [];
     this.defaultRoute = null;
@@ -20,11 +20,12 @@ export default class Router {
     this.routeTable.push({ path, page });
   }
 
-  route() {
+  go() {
     const routePath: string = location.hash;
 
     if (routePath === "" && this.defaultRoute) {
-      return this.defaultRoute.page.render();
+      this.defaultRoute.page.render();
+      return;
     }
 
     for (const routeInfo of this.routeTable) {

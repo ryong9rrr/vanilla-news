@@ -1,30 +1,18 @@
-import { Store } from "./types";
 import { scrollToTop } from "./utils";
 import Router from "./core/router";
 import { NewsFeedView, NewsDetailView } from "./page";
+import Store from "./store";
 
-const store: Store = {
-  currentPage: 1,
-  feeds: {},
-  isRead: {},
-};
-
-declare global {
-  interface Window {
-    store: Store;
-  }
-}
-
-window.store = store;
+const store = new Store();
 
 //window.addEventListener("DOMContentLoaded", router);
 document.getElementById("go-top")?.addEventListener("click", scrollToTop);
 
 const router: Router = new Router();
-const newsFeedView: NewsFeedView = new NewsFeedView("root");
-const newsDetailView: NewsDetailView = new NewsDetailView("root");
+const newsFeedView: NewsFeedView = new NewsFeedView("root", store);
+const newsDetailView: NewsDetailView = new NewsDetailView("root", store);
 
 router.setDefaultPage(newsFeedView);
 router.addRoutePath("/page/", newsFeedView);
 router.addRoutePath("/show/", newsDetailView);
-router.route();
+router.go();

@@ -1,5 +1,15 @@
 import View from "../core/view";
 
+export type NewsStore = {
+  setFeeds: (feeds: NewsFeeds) => NewsFeeds;
+  setIsRead: (id: number) => void;
+  currentPage: number;
+  prevPage: number;
+  nextPage: number;
+  feeds: NewsFeeds;
+  isRead: IsRead;
+};
+
 export type News = {
   readonly id: number;
   readonly user: string;
@@ -32,12 +42,6 @@ export type NewsFeeds = {
 
 export type IsRead = {
   [key: number]: boolean;
-};
-
-export type Store = {
-  currentPage: number;
-  feeds: NewsFeeds;
-  isRead: IsRead;
 };
 
 export type RouteInfo = {
