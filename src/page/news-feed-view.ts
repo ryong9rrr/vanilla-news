@@ -2,6 +2,7 @@ import Pagination from "../components/pagination";
 import { NewsFeedApi } from "../core/api";
 import View from "../core/view";
 import { IsRead, NewsFeed, NewsFeeds, NewsStore } from "../types";
+import { NEWS_URL } from "../config";
 
 const template = `
         <div>
@@ -23,14 +24,12 @@ const template = `
 
 export default class NewsFeedView extends View {
   private isRead: IsRead;
-  private api: NewsFeedApi;
   private feeds: NewsFeeds;
   private store: NewsStore;
 
   constructor(containerId: string, store: NewsStore) {
     super(containerId, template);
     this.store = store;
-    this.api = new NewsFeedApi();
     this.feeds = store.feeds;
     this.isRead = store.isRead;
     if (this.feeds.length === 0) {
@@ -40,7 +39,10 @@ export default class NewsFeedView extends View {
 
   private getFeeds(): void {
     const paging: number = Math.floor((this.store.currentPage - 1) / 3) + 1;
-    const newData: NewsFeed[] = this.api.getData(paging);
+    const api: NewsFeedApi = new NewsFeedApi(
+      NEWS_URL.replace("@paging", String(paging))
+    );
+    const newData: NewsFeed[] = api.getData();
     const feeds: NewsFeeds = {};
     let i = 0;
     for (let idx = (paging - 1) * 30; idx < paging * 30; idx++) {
@@ -85,7 +87,6 @@ export default class NewsFeedView extends View {
     return this.getHtml();
   }
 
-  // error 날듯
   render(): void {
     this.store.currentPage = Number(location.hash.slice(7)) || 1;
     const pagination: Pagination = new Pagination(this.store);

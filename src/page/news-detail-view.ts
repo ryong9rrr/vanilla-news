@@ -1,3 +1,4 @@
+import { CONTENT_URL } from "../config";
 import { NewsDetailApi } from "../core/api";
 import View from "../core/view";
 import { NewsComment, NewsDetail, NewsStore } from "../types";
@@ -35,12 +36,10 @@ const template: string = `
       `;
 
 export default class NewsDetailView extends View {
-  private api: NewsDetailApi;
   private store: NewsStore;
 
   constructor(containerId: string, store: NewsStore) {
     super(containerId, template);
-    this.api = new NewsDetailApi();
     this.store = store;
   }
 
@@ -69,7 +68,10 @@ export default class NewsDetailView extends View {
 
   render(): void {
     const id: string = location.hash.slice(7);
-    const newsContent: NewsDetail = this.api.getData(Number(id));
+    const api: NewsDetailApi = new NewsDetailApi(
+      CONTENT_URL.replace("@id", String(id))
+    );
+    const newsContent: NewsDetail = api.getData();
     this.store.setIsRead(Number(id));
     this.setTemplateData(
       "{{__comments__}}",
