@@ -28,11 +28,11 @@ export default class Store implements NewsStore {
     return this._currentPage === 30 ? 30 : this._currentPage + 1;
   }
 
-  get feeds() {
+  get feeds(): NewsFeeds {
     return this._feeds;
   }
 
-  get isRead() {
+  get isRead(): IsRead {
     return this._isRead;
   }
 

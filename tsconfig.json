@@ -10,5 +10,5 @@
     "downlevelIteration": true,
     "types": ["cypress"]
   },
-  "include": ["src/app.ts"]
+  "include": ["src/index.ts"]
 }
