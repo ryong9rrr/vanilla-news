@@ -71,34 +71,34 @@ export default class NewsDetailView extends View {
     const api: NewsDetailApi = new NewsDetailApi(
       CONTENT_URL.replace("@id", String(id))
     );
-    const newsContent: NewsDetail = api.getData();
-    this.store.setIsRead(Number(id));
-    this.setTemplateData(
-      "{{__comments__}}",
-      newsContent.comments.length > 0
-        ? this.makeComment(newsContent.comments)
-        : "No comments yet... Leave the first comment!"
-    );
-    this.setTemplateData(
-      "{{__current_page__}}",
-      String(this.store.currentPage)
-    );
-    this.setTemplateData("{{__title__}}", newsContent.title);
-    this.setTemplateData("{{__user__}}", newsContent.user);
-    this.setTemplateData("{{__points__}}", String(newsContent.points));
-    this.setTemplateData("{{__time_age__}}", newsContent.time_ago);
-    this.setTemplateData(
-      "{{__content__}}",
-      newsContent.content.length === 0
-        ? "🙊 oh, content is empty..."
-        : newsContent.content
-    );
-    this.setTemplateData(
-      "{{__comments_count__}}",
-      String(newsContent.comments_count)
-    );
+    api.getData((newsContent: NewsDetail) => {
+      this.store.setIsRead(Number(id));
+      this.setTemplateData(
+        "{{__comments__}}",
+        newsContent.comments.length > 0
+          ? this.makeComment(newsContent.comments)
+          : "No comments yet... Leave the first comment!"
+      );
+      this.setTemplateData(
+        "{{__current_page__}}",
+        String(this.store.currentPage)
+      );
+      this.setTemplateData("{{__title__}}", newsContent.title);
+      this.setTemplateData("{{__user__}}", newsContent.user);
+      this.setTemplateData("{{__points__}}", String(newsContent.points));
+      this.setTemplateData("{{__time_age__}}", newsContent.time_ago);
+      this.setTemplateData(
+        "{{__content__}}",
+        newsContent.content.length === 0
+          ? "🙊 oh, content is empty..."
+          : newsContent.content
+      );
+      this.setTemplateData(
+        "{{__comments_count__}}",
+        String(newsContent.comments_count)
+      );
 
-    this.updateView();
-    return;
+      return this.updateView();
+    });
   }
 }

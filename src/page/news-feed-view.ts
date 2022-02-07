@@ -32,9 +32,6 @@ export default class NewsFeedView extends View {
     this.store = store;
     this.feeds = store.feeds;
     this.isRead = store.isRead;
-    if (this.feeds.length === 0) {
-      this.getFeeds();
-    }
   }
 
   private getFeeds(): void {
@@ -42,20 +39,19 @@ export default class NewsFeedView extends View {
     const api: NewsFeedApi = new NewsFeedApi(
       NEWS_URL.replace("@paging", String(paging))
     );
-    const newData: NewsFeed[] = api.getData();
-    const feeds: NewsFeeds = {};
-    let i = 0;
-    for (let idx = (paging - 1) * 30; idx < paging * 30; idx++) {
-      feeds[idx] = newData[i++];
-    }
-    this.feeds = this.store.setFeeds(feeds);
+    api.getData((newData: NewsFeed[]) => {
+      const feeds: NewsFeeds = {};
+      let i = 0;
+      for (let idx = (paging - 1) * 30; idx < paging * 30; idx++) {
+        feeds[idx] = newData[i++];
+      }
+      this.feeds = this.store.setFeeds(feeds);
+
+      return this.renderView();
+    });
   }
 
   private makeFeed(): string {
-    if (!this.feeds[(this.store.currentPage - 1) * 10]) {
-      this.getFeeds();
-    }
-
     for (
       let i = (this.store.currentPage - 1) * 10;
       i < this.store.currentPage * 10;
@@ -89,10 +85,19 @@ export default class NewsFeedView extends View {
 
   render(): void {
     this.store.currentPage = Number(location.hash.slice(7)) || 1;
+    if (
+      this.feeds.length === 0 ||
+      !this.feeds[(this.store.currentPage - 1) * 10]
+    ) {
+      return this.getFeeds();
+    }
+    return this.renderView();
+  }
+
+  renderView = () => {
     const pagination: Pagination = new Pagination(this.store);
     this.setTemplateData("{{__news_feed__}}", this.makeFeed());
     this.setTemplateData("{{__pagination__}}", pagination.component());
-    this.updateView();
-    return;
-  }
+    return this.updateView();
+  };
 }
